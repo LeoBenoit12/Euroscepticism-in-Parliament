@@ -4,8 +4,6 @@ library(tidyverse)
 library(modelsummary)
 library(dplyr)
 library(readxl)
-library(polyglotr)
-library(googleLanguageR)
 
 ## Setting up a path to the file directory: [UNCOMMENT TO RUN]
 # path <- "YOUR PATH HERE"
