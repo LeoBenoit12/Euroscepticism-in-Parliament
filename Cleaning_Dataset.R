@@ -7,31 +7,66 @@ library(readxl)
 library(polyglotr)
 library(googleLanguageR)
 
+## Setting up a path to the file directory: [UNCOMMENT TO RUN]
+# path <- "YOUR PATH HERE"
+
 ### ------Clean data - Filter to Select relevant parties-------- ###
 
-UK_speech <- Corp_HouseOfCommons_V2 %>% 
-  filter(party %in% c("UKIP", "Con", "Lab", "LibDem"))
+UK_speech <- readRDS(paste(path, "Corp_HouseOfCommons_V2.rds", sep = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("UKIP", "Con", "Lab", "LibDem") &
+           date > "1999-01-01")
 
-DNK_speech <- Corp_Folketing_V2 %>% 
-  filter(party %in% c("FP", "DF", "V", "RV", "LA", "KF", "KRF", "EL", "CD", "S"))
+DNK_speech <- readRDS(paste(path, "Corp_Folketing_V2.rds", sep = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("FP", "DF", "V", "RV", "LA", "KF", "KRF", "EL", "CD", "S") &
+           date > "1999-01-01")
 
-NL_speech <- Corp_TweedeKamer_V2 %>% 
-  filter(party %in% c("CDA", "PvdA", "VVD", "D66", "CU", "SGP", "PVV", "FvD", "LPF", "RPF"))
+NL_speech <- readRDS(paste(path, "Corp_TweedeKamer_V2.rds", sep = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("CDA", "PvdA", "VVD", "D66", "CU", "SGP", "PVV", "FvD", "LPF", "RPF") &
+           date > "1999-01-01")
 
-AUS_speech <- Corp_Nationalrat_V2 %>% 
-  filter(party %in% c("SPÖ", "FPÖ", "ÖVP", "BZÖ", "NEOS"))
+AUS_speech <- readRDS(paste(path, "Corp_Nationalrat_V2.rds", sep = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("SPÖ", "FPÖ", "ÖVP", "BZÖ", "NEOS") &
+           date > "1999-01-01")
 
-CZE_speech <- Corp_PSP_V2 %>% 
-  filter(party %in% c("ODS", "KDU-ČSL", "ANO", "TOP09", "ČSSD", "SPR-RSČ"))
+CZE_speech <- readRDS(paste(path, "Corp_PSP_V2.rds", sep = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("ODS", "KDU-ČSL", "ANO", "TOP09", "ČSSD", "SPR-RSČ") &
+           date > "1999-01-01")
 
-SWE_speech <- Corp_Riksdagen_V2 %>% 
-  filter(party %in% c("SD", "C", "M", "KD", "FP", "S", "L"))
+SWE_speech <- readRDS(paste(path, "Corp_Riksdagen_V2.rds", sep = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("SD", "C", "M", "KD", "FP", "S", "L") &
+           date > "1999-01-01")
 
-ES_speech <- Corp_Congreso_V2 %>% 
-  filter(party %in% c("GPSOE", "GPP"))
+ES_speech <- readRDS(paste(path, "Corp_Congreso_V2.rds", sep = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("GPSOE", "GPP") &
+           date > "1999-01-01")
 
-DEU_speech <- Corp_Bundestag_V2 %>% 
-  filter(party %in% c("CDU/CSU", "SPD", "FDP", "AfD"))
+DEU_speech <- readRDS(paste(path, "Corp_Bundestag_V2.rds", seop = "")) |>
+  mutate(
+    date = as.Date(date, format = "%Y-%m-%d")
+  ) |>
+  filter(party %in% c("CDU/CSU", "SPD", "FDP", "AfD") &
+           date > "1999-01-01")
 
 ### ------Save Cleaned DataSet ----###
 
