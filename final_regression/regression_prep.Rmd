@@ -64,22 +64,103 @@ nrow(data) == nrow(data0) # Confirming we don't have a many-to-many relationship
 
 ```
 
+```{r}
+parlgov <- read_csv("view_election.csv") |> 
+  filter(party_id %in% unique(data$parlgov_id) & 
+           election_date > as.Date("1998-01-01")) |>
+  mutate(
+    country = case_when(
+      country_name_short == "AUT" ~ "AUS",
+      is.na(country_name_short) ~ NA,
+      .default = country_name_short
+    )
+  ) |>
+  dplyr::select(-country_name_short)
+
+
+## Getting election dates
+
+election_dates <- parlgov |>
+  dplyr::select(country, election_type, election_date) |>
+  mutate(
+    election_year_month = as.factor(format(election_date, "%Y-%m"))
+  ) |>
+  distinct()
+
+## Calculating time to next election
+
+data_dates <- data |>
+  dplyr::select(country, year_month) |>
+  distinct() |> # I now want to match the dates to the next closest election
+  left_join(election_dates |> 
+              filter(election_type == "parliament") |>
+              dplyr::select(country, election_year_month), 
+            by = "country") |> 
+  mutate(
+    time_to_next = round(as.numeric(difftime(as.Date(paste(election_year_month, "-01", sep = "")),
+                                             as.Date(paste(year_month, "-01", sep = "")),
+                                             units = "days")
+                                    )/30)
+  ) |>
+  filter(time_to_next >= 0) |>
+  group_by(country, year_month) |>
+  filter(time_to_next == min(time_to_next)) |>
+  ungroup() |>  
+  left_join(election_dates |> 
+              filter(election_type == "ep") |>
+              rename(election_year_month_ep = election_year_month) |>
+              dplyr::select(country, election_year_month_ep), 
+            by = "country") |> 
+  mutate(
+    time_to_next_ep = round(as.numeric(difftime(as.Date(paste(election_year_month_ep, "-01", sep = "")),
+                                                as.Date(paste(year_month, "-01", sep = "")),
+                                                units = "days")
+                                  ) / 30)
+  ) |>
+  filter(time_to_next_ep >= 0) |>
+  group_by(country, year_month) |>
+  filter(time_to_next_ep == min(time_to_next_ep)) |>
+  ungroup()
+
+data <- data |>
+  left_join(data_dates, 
+            by = c("country", "year_month")) |>
+  left_join(parlgov |>  # Calculating change in voteshare
+              filter(election_type == "parliament") |>
+              dplyr::select(country, election_date, party_name_short, vote_share, party_id) |>
+              group_by(party_id) |>
+              mutate(
+                change_voteshare = vote_share - lag(vote_share, order_by = election_date)
+                ) |>
+              ungroup() |>
+              rename(partyfacts_id = party_id),
+            by = c("country", "partyfacts_id"))
+
+nrow(data) == nrow(data0)
+
+```
+
 ## Plotting basic mention counts
 
 ```{r}
-
 data |>
   filter(eu_stance == 1) |>
   group_by(country, year_month) |> 
   summarise(
     n = n()
   ) |> 
+  ungroup() |> 
+  left_join(data_dates, 
+            by = c("country", "year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~country) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
-       title = "Number of speeches about the EU by country") +
+       title = "Number of speeches about the EU by country",
+       subtitle = "Black dotted lines are parliamentary elections, dotted blue lines are European elections") +
   scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
                    labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
@@ -90,8 +171,14 @@ data |>
   summarise(
     n = n()
   ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "AUS"), 
+            by = c("year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
@@ -106,8 +193,14 @@ data |>
   summarise(
     n = n()
   ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "DEU"), 
+            by = c("year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") + 
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
@@ -122,8 +215,14 @@ data |>
   summarise(
     n = n()
   ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "DNK"), 
+            by = c("year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
@@ -138,8 +237,14 @@ data |>
   summarise(
     n = n()
   ) |> 
+ ungroup() |> 
+left_join(data_dates |>
+            filter(country == "ESP"), 
+          by = c("year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
@@ -154,8 +259,14 @@ data |>
   summarise(
     n = n()
   ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "GBR"), 
+            by = c("year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") + 
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
@@ -170,8 +281,14 @@ data |>
   summarise(
     n = n()
   ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "NLD"), 
+            by = c("year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
@@ -186,8 +303,14 @@ data |>
   summarise(
     n = n()
   ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "SWE"), 
+            by = c("year_month")) |>
   ggplot(aes(x = year_month, y = n)) +
   geom_path(group=1) +  
+  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Number of speeches about the EU",
@@ -375,6 +498,71 @@ psych::alpha(ebjoin |>
 
 ```
 
+## Cleaning Coalition Inclusion Probabilities
+
+```{r}
+
+cip <- read.csv("CIP_dynamic_Austria_1995-2019.csv", sep = ";") |> 
+  mutate(country = "AUS",
+         date = str_replace_all(date, "\\.", "-"),
+         date = as.Date(date, "%d-%m-%Y"),
+         year_month = as.factor(format(date, "%Y-%m"))
+         ) |>
+  filter(is.na(excluding_parlgov_id)) |>
+  dplyr::select(-c(excluding_parlgov_id, excluding)) |>
+  bind_rows(
+    read.csv("CIP_dynamic_Spain_1980-2019.csv", sep = ";") |> 
+      mutate(country = "ESP",
+             date = str_replace_all(date, "\\.", "-"),
+             date = as.Date(date, "%d-%m-%Y"),
+             year_month = as.factor(format(date, "%Y-%m"))
+             ) |>
+      filter(is.na(excluding_parlgov_id)) |>
+      dplyr::select(-c(excluding_parlgov_id, excluding))
+  ) |> 
+  bind_rows(
+    read.csv("CIP_dynamic_Sweden_1970-2019.csv", sep = ";") |> 
+      mutate(country = "SWE",
+             date = str_replace_all(date, "\\.", "-"),
+             date = as.Date(date, "%d-%m-%Y"),
+             year_month = as.factor(format(date, "%Y-%m"))
+             ) |>
+      filter(is.na(excluding_parlgov_id)) |>
+      dplyr::select(-c(excluding_parlgov_id, excluding))
+  ) |> 
+  bind_rows(
+    read.csv("CIP_dynamic_Denmark_1970-2019.csv", sep = ";") |> 
+      mutate(country = "DNK",
+             date = str_replace_all(date, "\\.", "-"),
+             date = as.Date(date, "%d-%m-%Y"),
+             year_month = as.factor(format(date, "%Y-%m"))
+             ) |>
+      filter(is.na(excluding_parlgov_id)) |>
+      dplyr::select(-c(excluding_parlgov_id, excluding))
+  ) |> 
+  bind_rows(
+    read.csv("CIP_dynamic_Germany_1970-2019.csv", sep = ";") |> 
+      mutate(country = "DEU",
+             date = str_replace_all(date, "\\.", "-"),
+             date = as.Date(date, "%d-%m-%Y"),
+             year_month = as.factor(format(date, "%Y-%m"))
+             ) |>
+      filter(is.na(excluding_parlgov_id)) |>
+      dplyr::select(-c(excluding_parlgov_id, excluding))
+  ) |> 
+  bind_rows(
+    read.csv("CIP_dynamic_Netherlands_1970-2019.csv", sep = ";") |> 
+      mutate(country = "NLD",
+             date = str_replace_all(date, "\\.", "-"),
+             date = as.Date(date, "%d-%m-%Y"),
+             year_month = as.factor(format(date, "%Y-%m"))
+             ) |>
+      filter(is.na(excluding_parlgov_id)) |>
+      dplyr::select(-c(excluding_parlgov_id, excluding))
+  ) |> 
+  dplyr::select(-c(X, germany))
+
+```
 
 
 
