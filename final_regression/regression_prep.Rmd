@@ -15,7 +15,10 @@ theme_set(theme_bw() +
 
 ```
 
+## Cleaning LLM-Classified Speeches
+
 ```{r}
+
 data0 <- read_csv("EU_Speeches_classified.csv") |>
   mutate(
     year = as.numeric(format(date, "%Y")),
@@ -27,10 +30,11 @@ data0 <- read_csv("EU_Speeches_classified.csv") |>
 
 summary(data0)
 
-sum(is.na(data0$eu_stance))
+sum(is.na(data0$eu_stance)) ## Confirming all speeches have been assigned EU stance
 
 ```
 
+## Cleaning ParlGov and merging with speeches
 
 ```{r}
 
@@ -56,9 +60,11 @@ data <- data0 |>
     .default = partyfacts_id
   )), by = c("country", "partyfacts_id", "party"))
 
-nrow(data) == nrow(data0)
+nrow(data) == nrow(data0) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
 
 ```
+
+## Plotting basic mention counts
 
 ```{r}
 
@@ -191,3 +197,199 @@ data |>
   theme(panel.spacing.x = unit(5, "mm"))
 
 ```
+
+## Cleaning Eurobarometer data
+
+```{r}
+
+eb70_02 <- haven::read_dta("ZA3521_v2-0-1.dta") |> 
+  filter(year >= 1998 & nation2 %in% c(3, 4, 7, 9, 12, 17, 18)) |>
+  mutate(
+    nation2 = case_when(
+      nation2 == 3 ~ "NLD",
+      nation2 == 4 ~ "DEU",
+      nation2 == 7 ~ "DNK",
+      nation2 == 9 ~ "GBR", 
+      nation2 == 12 ~ "ESP",
+      nation2 == 17 ~ "SWE",
+      nation2 == 18 ~ "AUS" 
+    ) |> as.character()
+  )
+
+```
+
+
+```{r}
+
+eb04_21 <- haven::read_dta("harmonised_EB_2004-2021_v3-0-0.dta") |> 
+  filter(country %in% c(3, 4, 7, 9, 12, 17, 18)) |>
+  mutate(
+    country = case_when(
+      country == 3 ~ "NLD",
+      country == 4 ~ "DEU",
+      country == 7 ~ "DNK",
+      country == 9 ~ "GBR", 
+      country == 12 ~ "ESP",
+      country == 17 ~ "SWE",
+      country == 18 ~ "AUS" 
+    ),
+    date = as.Date(as.character(intdate_end), format = "%Y%m%d"),
+    year_moth = as.factor(format(date, "%Y-%m"))
+  )
+
+```
+
+
+```{r}
+
+ebjoint_mem <- eb70_02 |>
+    mutate(
+    mem = case_when(
+      membrshp == 1 ~ "Good",
+      membrshp == 2 ~ "Neither",
+      membrshp == 3 ~ "Bad",
+      TRUE ~ NA_character_
+    ) |> 
+      factor(levels = c("Good", "Neither", "Bad"))
+  ) |>
+  dplyr::select(nation2, year, mem) |>
+  rename(country = nation2) |>
+  bind_rows(
+    eb04_21 |>
+    mutate(
+    mem = case_when(
+      mem == 1 ~ "Good",
+      mem == 2 ~ "Neither",
+      mem == 3 ~ "Bad",
+      TRUE ~ NA_character_) |> 
+      factor(levels = c("Good", "Neither", "Bad"))
+    ) |>
+      dplyr::select(country, year, mem)
+  )
+
+ebjoint_mem |>
+  filter(!is.na(mem)) |>
+  group_by(year, country, mem) |>
+  summarise(
+    count = n()
+  ) |> 
+  ungroup() |>
+  ggplot(aes(fill = mem, y = count, x = year)) +
+  geom_bar(position = "fill", stat = "identity") +
+  facet_wrap(~ country) +
+  scale_fill_manual(values = c("Good" = "green4", "Neither" = "gold", "Bad" = "red3"), name = "") +
+  labs(x = "Year",
+       y = "Proportion of responses",
+       title = "Membership perception by country",
+       subtitle = "Eurobarometer data")
+
+```
+
+```{r}
+
+ebjoint_trust <- eb70_02 |>
+    mutate(
+    trustec = case_when(
+      trustec == 1 ~ "Trust",
+      trustec == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |> as.factor()
+  ) |>
+  dplyr::select(nation2, year, trustec) |>
+  rename(country = nation2) |>
+  bind_rows(
+    eb04_21 |>
+    mutate(
+    trustec = case_when(
+      treu_com == 1 ~ "Trust",
+      treu_com == 2 ~ "No Trust",
+      TRUE ~ NA_character_) |> as.factor()
+    ) |>
+      dplyr::select(country, year, trustec)
+  )
+
+ebjoint_trust |>
+  filter(!is.na(trustec)) |>
+  group_by(year, country, trustec) |>
+  # Now to get a count of each response to mem:
+  summarise(
+    count = n()
+  ) |> 
+  ungroup() |>
+  ggplot(aes(fill = trustec, y = count, x = year)) +
+  geom_bar(position = "fill", stat = "identity") +
+  facet_wrap(~ country) +
+  scale_fill_manual(values = c("Trust" = "green4", "No Trust" = "red3"), name = "") +
+  labs(x = "Year",
+       y = "Proportion of responses",
+       title = "Trust in the European Commission by country",
+       subtitle = "Eurobarometer data")
+
+```
+
+```{r}
+
+ebjoin <- eb70_02 |>
+    mutate(
+    mem = case_when(
+      membrshp == 1 ~ "Good",
+      membrshp == 2 ~ "Neither",
+      membrshp == 3 ~ "Bad",
+      TRUE ~ NA_character_) |> 
+      factor(levels = c("Good", "Neither", "Bad")),
+    trustec = case_when(
+      trustec == 1 ~ "Trust",
+      trustec == 2 ~ "No Trust",
+      TRUE ~ NA_character_) |> 
+      as.factor()
+  ) |>
+  dplyr::select(nation2, year, mem, trustec) |>
+  rename(country = nation2) |>
+  bind_rows(
+    eb04_21 |>
+    mutate(
+    mem = case_when(
+      mem == 1 ~ "Good",
+      mem == 2 ~ "Neither",
+      mem == 3 ~ "Bad",
+      TRUE ~ NA_character_) |> 
+      factor(levels = c("Good", "Neither", "Bad")),
+    trustec = case_when(
+      treu_com == 1 ~ "Trust",
+      treu_com == 2 ~ "No Trust",
+      TRUE ~ NA_character_) |> 
+      as.factor()
+    ) |>
+      dplyr::select(country, year, mem, trustec)
+  )
+
+# Calculate the cronbach's alpha for the trust and membership variables
+psych::alpha(ebjoin |>
+               dplyr::select(mem, trustec) |>
+  mutate(
+    mem = as.numeric(mem),
+    trustec = as.numeric(trustec)
+  ) |>
+  na.omit(),
+  check.keys = T)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
