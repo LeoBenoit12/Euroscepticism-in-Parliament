@@ -1,7 +1,18 @@
 Regression Prep
 ================
 Duarte Amaro
-2025-06-12
+2025-06-13
+
+## Model structure and variables
+
+The DV is EU position, measured as share of Eurosceptic sentences
+aggregated at the party level.
+
+The controls are RRP voteshare, own party vote loss, time to the next
+parliamentary election, time to the next European election, party size
+(in terms of vote share), current government participation, a proxy for
+public support for the EU in the country, a recession dummy variable,
+and coalition inclusion probabilities.
 
 ## Cleaning LLM-Classified Speeches
 
@@ -128,6 +139,8 @@ data0.2 <- data0 |>
 ## Cleaning ParlGov and merging with speeches
 
 ``` r
+## Getting parlgov and partyfacts codes:
+
 partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
   filter((partyfacts_id %in% unique(data0$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
            dataset_key == "parlgov" &
@@ -152,6 +165,8 @@ partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
+## Merging partyfacts and parlgov codes with speeches
+
 data <- data0.2 |> 
   dplyr::select(country, party, partyfacts_id) |> 
   distinct() |> 
@@ -165,7 +180,8 @@ data <- data0.2 |>
   mutate(partyfacts_id = case_when(
     partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
     .default = partyfacts_id
-  )), by = c("country", "partyfacts_id", "party"))
+  )), by = c("country", "partyfacts_id", "party")) |>
+  mutate(parlgov_id = as.numeric(parlgov_id))
 
 nrow(data) == nrow(data0.2) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
 ```
@@ -173,9 +189,11 @@ nrow(data) == nrow(data0.2) # Confirming we don't have a many-to-many relationsh
     ## [1] TRUE
 
 ``` r
-parlgov <- read_csv("view_election.csv") |> 
-  filter(party_id %in% unique(data$parlgov_id) & 
-           election_date > as.Date("1998-01-01")) |>
+## Getting election results from parlgov
+
+parlgov_elections <- read_csv("view_election.csv") |>
+  filter(country_name_short %in% c("AUT", "DEU", "DNK", "ESP", "GBR", "NLD", "SWE") &
+           election_date > as.Date("1990-01-01")) |>
   mutate(
     country = case_when(
       country_name_short == "AUT" ~ "AUS",
@@ -183,7 +201,9 @@ parlgov <- read_csv("view_election.csv") |>
       .default = country_name_short
     )
   ) |>
-  dplyr::select(-country_name_short)
+  dplyr::select(c(country, election_type, election_date, 
+                  vote_share, party_name_short, party_name, 
+                  party_name_english, party_id)) 
 ```
 
     ## Rows: 9016 Columns: 16
@@ -197,9 +217,98 @@ parlgov <- read_csv("view_election.csv") |>
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
+## Getting right-wing populist parties
+
+rrp_results <- parlgov_elections |>
+  left_join(read_csv("view_party.csv") |>
+              filter(country_name_short %in% c("AUT", "DEU", "DNK", "ESP", "GBR", "NLD", "SWE")) |>
+              mutate(
+                country = case_when(
+                  country_name_short == "AUT" ~ "AUS",
+                  is.na(country_name_short) ~ NA,
+                  .default = country_name_short)
+                ) |>
+              dplyr::select(c(country, family_name, party_id))
+            ) |>
+  filter(family_name == "Right-wing") 
+```
+
+    ## Rows: 1707 Columns: 23
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr  (8): country_name_short, country_name, party_name_short, party_name_eng...
+    ## dbl (15): left_right, state_market, liberty_authority, eu_anti_pro, cmp, eup...
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+    ## Joining with `by = join_by(country, party_id)`
+
+``` r
+tibble(rrp_results |> 
+         dplyr::select(country, party_name_short, party_name_english) |>
+         distinct())
+```
+
+    ## # A tibble: 25 × 3
+    ##    country party_name_short party_name_english                                  
+    ##    <chr>   <chr>            <chr>                                               
+    ##  1 AUS     FPO              Freedom Party of Austria                            
+    ##  2 AUS     BZO              Alliance for the Future of Austria                  
+    ##  3 DEU     Rep              The Republicans                                     
+    ##  4 DEU     BFB              Confederation of free citizens -- Offensive for Ger…
+    ##  5 DEU     DVU              German People's Union                               
+    ##  6 DEU     NPD              National Democratic Party                           
+    ##  7 DEU     AfD              Alternative for Germany                             
+    ##  8 DNK     DF               Danish People's Party                               
+    ##  9 DNK     NB               The New Right                                       
+    ## 10 DNK     SK               Hard Line                                           
+    ## # ℹ 15 more rows
+
+``` r
+## Merging with election results to have sum RRP voteshare
+
+parlgov_elections <- parlgov_elections |>
+  left_join(
+    rrp_results |> 
+      group_by(election_date, election_type, country) |>
+      mutate(rrp_voteshare = sum(vote_share, na.rm = TRUE)) |>
+      ungroup() |> 
+      dplyr::select(country, election_type, election_date, rrp_voteshare) |>
+      distinct(),
+    by = c("country", "election_type", "election_date")
+    )
+
+## Getting cabinet composition data
+
+parlgov_cab <- read_csv("view_cabinet.csv") |>
+      filter(country_name_short %in% c("AUT", "DEU", "DNK", "ESP", "GBR", "NLD", "SWE") &
+               election_date > as.Date("1990-01-01")) |>
+      mutate(
+        country = case_when(
+        country_name_short == "AUT" ~ "AUS",
+        is.na(country_name_short) ~ NA,
+        .default = country_name_short
+        )
+        ) |>
+      dplyr::select(c(country, election_date, start_date, 
+                      cabinet_name, cabinet_party, party_id,
+                      cabinet_id)) 
+```
+
+    ## Rows: 12659 Columns: 19
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr   (6): country_name_short, country_name, cabinet_name, party_name_short,...
+    ## dbl  (11): caretaker, cabinet_party, prime_minister, seats, election_seats_t...
+    ## date  (2): election_date, start_date
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
 ## Getting election dates
 
-election_dates <- parlgov |>
+election_dates <- parlgov_elections |>
   dplyr::select(country, election_type, election_date) |>
   mutate(
     election_year_month = as.factor(format(election_date, "%Y-%m"))
@@ -208,73 +317,183 @@ election_dates <- parlgov |>
 
 ## Calculating time to next election
 
-data_dates <- data |>
+data_election_dates <- data |>
   dplyr::select(country, year_month) |>
-  distinct() |> # I now want to match the dates to the next closest election
+  distinct() |> # I now want to match the dates to the next closest election:
   left_join(election_dates |> 
               filter(election_type == "parliament") |>
               dplyr::select(country, election_year_month), 
-            by = "country") |> 
+            by = "country") |>
   mutate(
-    time_to_next = round(as.numeric(difftime(as.Date(paste(election_year_month, "-01", sep = "")),
-                                             as.Date(paste(year_month, "-01", sep = "")),
-                                             units = "days")
-                                    )/30)
-  ) |>
-  filter(time_to_next >= 0) |>
+    time_to_last = round(as.numeric(difftime(as.Date(paste(year_month, "-01", sep = "")),
+                                             as.Date(paste(election_year_month, "-01", sep = "")),
+                                             units = "days"))/30)
+    ) |>
+  filter(time_to_last >= 0) |> 
   group_by(country, year_month) |>
-  filter(time_to_next == min(time_to_next)) |>
-  ungroup() |>  
+  filter(time_to_last == min(time_to_last)) |>
+  ungroup() |>
+  rename(last_election_year_month = election_year_month) |>
+  dplyr::select(-time_to_last) |>
+  left_join(
+    data |>
+      dplyr::select(country, year_month) |>
+      distinct() |> # I now want to match the dates to the next closest election:
+      left_join(election_dates |> 
+                  filter(election_type == "parliament") |>
+                  dplyr::select(country, election_year_month), 
+                by = "country") |>
+      mutate(
+        time_to_next = round(as.numeric(difftime(as.Date(paste(election_year_month, "-01", sep = "")),
+                                                 as.Date(paste(year_month, "-01", sep = "")),
+                                                 units = "days"))/30)
+        ) |>
+      filter(time_to_next >= 0) |> 
+      group_by(country, year_month) |>
+      filter(time_to_next == min(time_to_next)) |>
+      ungroup() |>
+      rename(next_election_year_month = election_year_month)) |>
   left_join(election_dates |> 
               filter(election_type == "ep") |>
               rename(election_year_month_ep = election_year_month) |>
-              dplyr::select(country, election_year_month_ep), 
+              dplyr::select(country, election_year_month_ep) |>
+              bind_rows(tibble(country = c("NLD", "GBR"), 
+                               election_year_month_ep = c("2024-06", "2024-06"))), 
             by = "country") |> 
   mutate(
     time_to_next_ep = round(as.numeric(difftime(as.Date(paste(election_year_month_ep, "-01", sep = "")),
                                                 as.Date(paste(year_month, "-01", sep = "")),
                                                 units = "days")
                                   ) / 30)
-  ) |>
+  ) |> 
   filter(time_to_next_ep >= 0) |>
   group_by(country, year_month) |>
   filter(time_to_next_ep == min(time_to_next_ep)) |>
-  ungroup()
+  ungroup() |>
+  mutate(
+    time_to_next_ep = case_when(
+      country == "GBR" & election_year_month_ep == "2024-06" ~ NA,
+      .default = time_to_next_ep
+    ),
+    election_year_month_ep = case_when(
+      country == "GBR" & election_year_month_ep == "2024-06" ~ NA,
+      .default = election_year_month_ep
+    ),
+  ) |>
+  rename(next_election_year_month_ep = election_year_month_ep)
 ```
 
     ## Warning in left_join(distinct(dplyr::select(data, country, year_month)), : Detected an unexpected many-to-many relationship between `x` and `y`.
     ## ℹ Row 1 of `x` matches multiple rows in `y`.
-    ## ℹ Row 45 of `y` matches multiple rows in `x`.
+    ## ℹ Row 57 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
 
-    ## Warning in left_join(ungroup(filter(group_by(filter(mutate(left_join(distinct(dplyr::select(data, : Detected an unexpected many-to-many relationship between `x` and `y`.
+    ## Warning in left_join(distinct(dplyr::select(data, country, year_month)), : Detected an unexpected many-to-many relationship between `x` and `y`.
     ## ℹ Row 1 of `x` matches multiple rows in `y`.
-    ## ℹ Row 31 of `y` matches multiple rows in `x`.
+    ## ℹ Row 57 of `y` matches multiple rows in `x`.
+    ## ℹ If a many-to-many relationship is expected, set `relationship =
+    ##   "many-to-many"` to silence this warning.
+
+    ## Joining with `by = join_by(country, year_month)`
+
+    ## Warning in left_join(left_join(dplyr::select(rename(ungroup(filter(group_by(filter(mutate(left_join(distinct(dplyr::select(data, : Detected an unexpected many-to-many relationship between `x` and `y`.
+    ## ℹ Row 1 of `x` matches multiple rows in `y`.
+    ## ℹ Row 38 of `y` matches multiple rows in `x`.
     ## ℹ If a many-to-many relationship is expected, set `relationship =
     ##   "many-to-many"` to silence this warning.
 
 ``` r
-data <- data |>
-  left_join(data_dates, 
-            by = c("country", "year_month")) |>
-  left_join(parlgov |>  # Calculating change in voteshare
+## Doing the same for cabinets (but we're only interested in keeping the current cabinet)
+
+cab_dates <- parlgov_cab |>
+  dplyr::select(country, start_date, cabinet_id) |>
+  mutate(
+    start_year_month = as.factor(format(start_date, "%Y-%m"))
+  ) |>
+  distinct()
+
+data_cab_dates <- data |>
+  dplyr::select(country, year_month) |>
+  distinct() |> # I now want to match the dates to the next closest cabinet:
+  left_join(cab_dates |> 
+              dplyr::select(country, start_year_month, cabinet_id), 
+            by = "country") |>
+  mutate(
+    time_to_next_cab = round(as.numeric(difftime(as.Date(paste(start_year_month, "-01", sep = "")),
+                                                  as.Date(paste(year_month, "-01", sep = "")),
+                                                  units = "days")
+                                    )/30)
+  ) |> 
+  filter(time_to_next_cab <= 0) |> # We only want cabinets whose start date is in the past
+  group_by(country, year_month) |>
+  filter(time_to_next_cab == max(time_to_next_cab)) |> # But for any given date we just want to closest past cabinet
+  ungroup() |> 
+  dplyr::select(-time_to_next_cab) # The time difference variable isn't of interest
+```
+
+    ## Warning in left_join(distinct(dplyr::select(data, country, year_month)), : Detected an unexpected many-to-many relationship between `x` and `y`.
+    ## ℹ Row 1 of `x` matches multiple rows in `y`.
+    ## ℹ Row 85 of `y` matches multiple rows in `x`.
+    ## ℹ If a many-to-many relationship is expected, set `relationship =
+    ##   "many-to-many"` to silence this warning.
+
+``` r
+## Now to get a single data_dates dataframe:
+
+data_dates <- data_election_dates |>
+  full_join(data_cab_dates, by = c("country", "year_month"))
+
+## Merging speeches with election results
+
+vote_changes <- parlgov_elections |>  # Calculating change in voteshare
               filter(election_type == "parliament") |>
-              dplyr::select(country, election_date, party_name_short, vote_share, party_id) |>
+              dplyr::select(country, election_date, party_name_short, vote_share, party_id, rrp_voteshare) |>
               group_by(party_id) |>
               mutate(
                 change_voteshare = vote_share - lag(vote_share, order_by = election_date)
                 ) |>
               ungroup() |>
-              rename(partyfacts_id = party_id),
-            by = c("country", "partyfacts_id"))
+              mutate(last_election_year_month = as.factor(format(election_date, "%Y-%m"))) |>
+              rename(parlgov_id = party_id)
 
-beepr::beep(2)
+data <- data |>
+  left_join(data_dates, 
+            by = c("country", "year_month")) |> 
+  left_join(vote_changes,
+            by = c("country", "parlgov_id", "last_election_year_month")
+            ) |>
+  left_join(parlgov_cab |>
+              mutate(start_year_month = as.factor(format(start_date, "%Y-%m"))) |>
+              rename(parlgov_id = party_id) |>
+              dplyr::select(country, start_year_month, cabinet_id, cabinet_name, cabinet_party, parlgov_id),
+            by = c("country", "start_year_month", "cabinet_id", "parlgov_id"))
 
 nrow(data) == nrow(data0.2)
 ```
 
     ## [1] TRUE
+
+The main control variables are now in the `data` dataframe, which
+contains the speeches classified by LLMs, the party information, and the
+election results.
+
+The controls are RRP voteshare, own party vote loss, time to the next
+parliamentary election, time to the next European election, party size
+(in terms of vote share), current government participation, a proxy for
+public support for the EU in the country, a recession dummy variable,
+and coalition inclusion probabilities.
+
+| Variable                                  | Variable name      |
+|-------------------------------------------|--------------------|
+| RRP vote share in the last election       | `rrp_voteshare`    |
+| Own party vote share in the last election | `vote_share`       |
+| Change in own party vote share            | `change_voteshare` |
+| Time to the next parliamentary election   | `time_to_next`     |
+| Time to the next European election        | `time_to_next_ep`  |
+| Current government participation          | `cabinet_party`    |
+
+Variable names in the dataset
 
 ## Plotting the frequency of speeches by country
 
@@ -293,8 +512,8 @@ data |>
             by = c("country", "year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~country) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -308,12 +527,10 @@ data |>
     ## `summarise()` has grouped output by 'country'. You can override using the
     ## `.groups` argument.
 
-    ## Warning: Removed 8 rows containing missing values or values outside the scale range
-    ## (`geom_vline()`).
-    ## Removed 8 rows containing missing values or values outside the scale range
+    ## Warning: Removed 6 rows containing missing values or values outside the scale range
     ## (`geom_vline()`).
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 ## Per year:
@@ -344,7 +561,7 @@ data |>
     ## `summarise()` has grouped output by 'country'. You can override using the
     ## `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
 
 ## Now doing the same by party for each country:
 
@@ -362,8 +579,8 @@ data |>
             by = c("year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +  
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -376,7 +593,7 @@ data |>
     ## `summarise()` has grouped output by 'name_short'. You can override using the
     ## `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
 data |>
@@ -392,8 +609,8 @@ data |>
             by = c("year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +  
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") + 
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -406,7 +623,7 @@ data |>
     ## `summarise()` has grouped output by 'name_short'. You can override using the
     ## `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 
 ``` r
 data |>
@@ -422,8 +639,8 @@ data |>
             by = c("year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +  
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -436,7 +653,7 @@ data |>
     ## `summarise()` has grouped output by 'name_short'. You can override using the
     ## `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
 
 ``` r
 data |>
@@ -452,8 +669,8 @@ left_join(data_dates |>
           by = c("year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +  
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short, ncol = 1) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -466,7 +683,7 @@ left_join(data_dates |>
     ## `summarise()` has grouped output by 'name_short'. You can override using the
     ## `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
 
 ``` r
 data |>
@@ -482,8 +699,8 @@ data |>
             by = c("year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +  
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") + 
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -498,10 +715,8 @@ data |>
 
     ## Warning: Removed 18 rows containing missing values or values outside the scale range
     ## (`geom_vline()`).
-    ## Removed 18 rows containing missing values or values outside the scale range
-    ## (`geom_vline()`).
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-5-5.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-4-5.png)<!-- -->
 
 ``` r
 data |>
@@ -517,8 +732,8 @@ data |>
             by = c("year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +  
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -531,13 +746,7 @@ data |>
     ## `summarise()` has grouped output by 'name_short'. You can override using the
     ## `.groups` argument.
 
-    ## Warning: Removed 16 rows containing missing values or values outside the scale range
-    ## (`geom_vline()`).
-
-    ## Warning: Removed 16 rows containing missing values or values outside the scale range
-    ## (`geom_vline()`).
-
-![](regression_prep_files/figure-gfm/unnamed-chunk-5-6.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-4-6.png)<!-- -->
 
 ``` r
 data |>
@@ -553,8 +762,8 @@ data |>
             by = c("year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
   geom_path(group=1) +  
-  geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~ name_short) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
@@ -567,7 +776,7 @@ data |>
     ## `summarise()` has grouped output by 'name_short'. You can override using the
     ## `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-5-7.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-4-7.png)<!-- -->
 
 ``` r
 data |>
@@ -593,7 +802,7 @@ data |>
     ## `summarise()` has grouped output by 'country', 'name_short'. You can override
     ## using the `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 data |>
@@ -619,7 +828,7 @@ data |>
     ## `summarise()` has grouped output by 'country', 'name_short'. You can override
     ## using the `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
 ## Cleaning Eurobarometer data
 
@@ -703,7 +912,7 @@ ebjoint_mem |>
     ## `summarise()` has grouped output by 'year', 'country'. You can override using
     ## the `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 ebjoint_trust <- eb70_02 |>
@@ -748,7 +957,7 @@ ebjoint_trust |>
     ## `summarise()` has grouped output by 'year', 'country'. You can override using
     ## the `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 ebjoin <- eb70_02 |>
