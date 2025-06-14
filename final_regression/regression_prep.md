@@ -1,7 +1,7 @@
 Regression Prep
 ================
 Duarte Amaro
-2025-06-13
+2025-06-14
 
 ## Model structure and variables
 
@@ -17,14 +17,16 @@ and coalition inclusion probabilities.
 ## Cleaning LLM-Classified Speeches
 
 ``` r
-data0 <- read_csv("EU_Speeches_classified.csv") |>
+eu_mentions <- read_csv("EU_Speeches_classified.csv") |>
   mutate(
     year = as.numeric(format(date, "%Y")),
     year_month = as.factor(format(date, "%Y-%m"))
   ) |>
   rename(country = iso3country,
-         eu_stance = EU_2,
-         partyfacts_id = party.facts.id)
+         eu_mention = EU_2,
+         partyfacts_id = party.facts.id) |>
+  dplyr::select(-"...1") |>
+  distinct()
 ```
 
     ## New names:
@@ -39,44 +41,44 @@ data0 <- read_csv("EU_Speeches_classified.csv") |>
     ## • `` -> `...1`
 
 ``` r
-summary(data0)
+summary(eu_mentions)
 ```
 
-    ##       ...1              date             speechnumber      speaker         
-    ##  Min.   :      1   Min.   :1999-01-11   Min.   :   1.0   Length:1484408    
-    ##  1st Qu.: 371103   1st Qu.:2004-04-27   1st Qu.:  67.0   Class :character  
-    ##  Median : 742205   Median :2009-10-29   Median : 176.0   Mode  :character  
-    ##  Mean   : 742205   Mean   :2009-07-09   Mean   : 215.5                     
-    ##  3rd Qu.:1113306   3rd Qu.:2014-07-22   3rd Qu.: 325.0                     
-    ##  Max.   :1484408   Max.   :2019-12-17   Max.   :2407.0                     
-    ##                                                                            
-    ##     party           partyfacts_id    chair             terms        
-    ##  Length:1484408     Min.   :  45   Mode :logical   Min.   :    1.0  
-    ##  Class :character   1st Qu.: 487   FALSE:1484408   1st Qu.:  207.0  
-    ##  Mode  :character   Median :1178                   Median :  555.0  
-    ##                     Mean   :1023                   Mean   :  773.7  
-    ##                     3rd Qu.:1516                   3rd Qu.: 1036.0  
-    ##                     Max.   :5855                   Max.   :19163.0  
+    ##       date             speechnumber    speaker             party          
+    ##  Min.   :1999-01-11   Min.   :   1   Length:1265273     Length:1265273    
+    ##  1st Qu.:2004-04-01   1st Qu.:  62   Class :character   Class :character  
+    ##  Median :2009-07-21   Median : 168   Mode  :character   Mode  :character  
+    ##  Mean   :2009-07-05   Mean   : 208                                        
+    ##  3rd Qu.:2014-09-24   3rd Qu.: 317                                        
+    ##  Max.   :2019-12-17   Max.   :2407                                        
+    ##                                                                           
+    ##  partyfacts_id    chair             terms          parliament       
+    ##  Min.   :  45   Mode :logical   Min.   :    1.0   Length:1265273    
+    ##  1st Qu.: 487   FALSE:1265273   1st Qu.:  218.0   Class :character  
+    ##  Median :1234                   Median :  583.0   Mode  :character  
+    ##  Mean   :1037                   Mean   :  806.1                     
+    ##  3rd Qu.:1516                   3rd Qu.: 1076.0                     
+    ##  Max.   :5855                   Max.   :19163.0                     
     ##                                                                     
-    ##   parliament          country            speech_ID         sentence        
-    ##  Length:1484408     Length:1484408     Min.   :      1   Length:1484408    
-    ##  Class :character   Class :character   1st Qu.:  59275   Class :character  
-    ##  Mode  :character   Mode  :character   Median : 193010   Mode  :character  
-    ##                                        Mean   : 314001                     
-    ##                                        3rd Qu.: 462103                     
-    ##                                        Max.   :1247692                     
-    ##                                                                            
-    ##        EU      eu_stance           year        year_month     
-    ##  Min.   :1   Min.   :0.0000   Min.   :1999   2000-11:  13815  
-    ##  1st Qu.:1   1st Qu.:0.0000   1st Qu.:2004   2011-11:  12282  
-    ##  Median :1   Median :1.0000   Median :2009   2008-06:  11960  
-    ##  Mean   :1   Mean   :0.7339   Mean   :2009   2011-03:  11833  
-    ##  3rd Qu.:1   3rd Qu.:1.0000   3rd Qu.:2014   2005-06:  11719  
-    ##  Max.   :1   Max.   :1.0000   Max.   :2019   2015-06:  10862  
-    ##                                              (Other):1411937
+    ##    country            speech_ID         sentence               EU   
+    ##  Length:1265273     Min.   :      1   Length:1265273     Min.   :1  
+    ##  Class :character   1st Qu.:  52196   Class :character   1st Qu.:1  
+    ##  Mode  :character   Median : 170920   Mode  :character   Median :1  
+    ##                     Mean   : 317329                      Mean   :1  
+    ##                     3rd Qu.: 470897                      3rd Qu.:1  
+    ##                     Max.   :1247692                      Max.   :1  
+    ##                                                                     
+    ##    eu_mention          year        year_month     
+    ##  Min.   :0.0000   Min.   :1999   2000-11:  11314  
+    ##  1st Qu.:0.0000   1st Qu.:2004   2011-03:  10174  
+    ##  Median :1.0000   Median :2009   2005-06:  10135  
+    ##  Mean   :0.7403   Mean   :2009   2011-11:   9548  
+    ##  3rd Qu.:1.0000   3rd Qu.:2014   2008-06:   9545  
+    ##  Max.   :1.0000   Max.   :2019   2018-06:   9484  
+    ##                                  (Other):1205073
 
 ``` r
-sum(is.na(data0$eu_stance)) ## Confirming all speeches have been assigned EU stance
+sum(is.na(eu_mentions$eu_mention)) ## Confirming all speeches have been assigned EU stance
 ```
 
     ## [1] 0
@@ -84,13 +86,14 @@ sum(is.na(data0$eu_stance)) ## Confirming all speeches have been assigned EU sta
 ``` r
 nonEU_speeches <- read_csv("NonEU_Speeches.csv") |>
   mutate(
-    eu_stance = 0,
+    eu_mention = 0,
     year = as.numeric(format(date, "%Y")),
     year_month = as.factor(format(date, "%Y-%m"))
   ) |>
   rename(country = iso3country,
          partyfacts_id = party.facts.id) |>
-  dplyr::select(-"Unnamed: 0")
+  dplyr::select(-c("...1", "Unnamed: 0")) |>
+  distinct()
 ```
 
     ## New names:
@@ -107,12 +110,14 @@ nonEU_speeches <- read_csv("NonEU_Speeches.csv") |>
 ``` r
 nonEU_speeches_UK <- read_csv("UK_NonEU.csv") |>
   mutate(
-    eu_stance = 0,
+    eu_mention = 0,
     year = as.numeric(format(date, "%Y")),
     year_month = as.factor(format(date, "%Y-%m"))
   ) |>
   rename(country = iso3country,
-         partyfacts_id = party.facts.id)
+         partyfacts_id = party.facts.id) |>
+  dplyr::select(-"...1") |>
+  distinct()
 ```
 
     ## New names:
@@ -127,14 +132,47 @@ nonEU_speeches_UK <- read_csv("UK_NonEU.csv") |>
     ## • `` -> `...1`
 
 ``` r
-data0.2 <- data0 |>
+eu_stance <- read_csv("EU_stance_classified_V2.csv") |>
+  mutate(
+    Stance = as.numeric(Stance),
+    year = as.numeric(format(date, "%Y")),
+    year_month = as.factor(format(date, "%Y-%m"))
+  ) |>
+  rename(country = iso3country,
+         eu_mention = EU_2,
+         eu_stance = Stance,
+         partyfacts_id = party.facts.id) |>
+  dplyr::select(-"Unnamed: 0") |>
+  distinct()
+```
+
+    ## Rows: 1089370 Columns: 15
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr  (5): speaker, party, parliament, iso3country, sentence
+    ## dbl  (7): Unnamed: 0, speechnumber, party.facts.id, terms, speech_ID, EU, EU_2
+    ## lgl  (2): chair, Stance
+    ## date (1): date
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+data0 <- eu_mentions |>
   bind_rows(
     nonEU_speeches
   ) |>
   bind_rows(
     nonEU_speeches_UK
   )
+
+data0.2 <- data0 |>
+  left_join(eu_stance)
 ```
+
+    ## Joining with `by = join_by(date, speechnumber, speaker, party, partyfacts_id,
+    ## chair, terms, parliament, country, speech_ID, sentence, EU, eu_mention, year,
+    ## year_month)`
 
 ## Cleaning ParlGov and merging with speeches
 
@@ -467,7 +505,8 @@ data <- data |>
               mutate(start_year_month = as.factor(format(start_date, "%Y-%m"))) |>
               rename(parlgov_id = party_id) |>
               dplyr::select(country, start_year_month, cabinet_id, cabinet_name, cabinet_party, parlgov_id),
-            by = c("country", "start_year_month", "cabinet_id", "parlgov_id"))
+            by = c("country", "start_year_month", "cabinet_id", "parlgov_id")) |>
+  mutate(year_month = as.factor(year_month))
 
 nrow(data) == nrow(data0.2)
 ```
@@ -495,6 +534,8 @@ and coalition inclusion probabilities.
 
 Variable names in the dataset
 
+# Salience
+
 ## Plotting the frequency of speeches by country
 
 ``` r
@@ -505,13 +546,16 @@ data |>
   group_by(country, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |>
   left_join(data_dates, 
             by = c("country", "year_month")) |>
   ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +
+  geom_path(group=1, alpha = 0.4) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.2) +
   geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
   facet_wrap(~country) +
@@ -526,6 +570,7 @@ data |>
 
     ## `summarise()` has grouped output by 'country'. You can override using the
     ## `.groups` argument.
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
     ## Warning: Removed 6 rows containing missing values or values outside the scale range
     ## (`geom_vline()`).
@@ -541,7 +586,7 @@ data |>
   group_by(country, year) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |>
   # left_join(data_dates, 
@@ -571,7 +616,7 @@ data |>
   group_by(name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |> 
   left_join(data_dates |>
@@ -601,7 +646,7 @@ data |>
   group_by(name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |> 
   left_join(data_dates |>
@@ -631,7 +676,7 @@ data |>
   group_by(name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |> 
   left_join(data_dates |>
@@ -661,7 +706,7 @@ data |>
   group_by(name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
  ungroup() |> 
 left_join(data_dates |>
@@ -691,7 +736,7 @@ data |>
   group_by(name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |> 
   left_join(data_dates |>
@@ -724,7 +769,7 @@ data |>
   group_by(name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |> 
   left_join(data_dates |>
@@ -754,7 +799,7 @@ data |>
   group_by(name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |> 
   left_join(data_dates |>
@@ -783,7 +828,7 @@ data |>
   group_by(country, name_short, year_month) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |>
   ggplot(aes(x = reorder(name_short, prop_eu),
@@ -809,7 +854,7 @@ data |>
   group_by(country, name_short, year) |> 
   summarise(
     n = n(),
-    prop_eu = 100*mean(eu_stance)
+    prop_eu = 100*mean(eu_mention)
   ) |> 
   ungroup() |>
   ggplot(aes(x = reorder(name_short, prop_eu),
@@ -829,6 +874,348 @@ data |>
     ## using the `.groups` argument.
 
 ![](regression_prep_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+
+# Position
+
+## First, plotting aggregate share of Eurosceptic by country (per month and per year)
+
+``` r
+## Per month:
+
+data |>
+  filter(eu_mention == 1) |>
+  group_by(country, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |>
+  left_join(data_dates, 
+            by = c("country", "year_month")) |>
+  ggplot(aes(x = year_month, y = prop_eu)) +
+  geom_path(group=1) +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
+  facet_wrap(~country) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences as share of all sentences about the EU",
+       subtitle = "Black dotted lines are parliamentary elections, dotted blue lines are European elections") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                    labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'country'. You can override using the
+    ## `.groups` argument.
+
+    ## Warning: Removed 6 rows containing missing values or values outside the scale range
+    ## (`geom_vline()`).
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
+## Per year:
+
+data |>
+  dplyr::select(-year_month) |>
+  filter(eu_mention == 1) |>
+  group_by(country, year) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |>
+  # left_join(data_dates, 
+  #           by = c("country", "year")) |>
+  ggplot(aes(x = year, y = prop_eu)) +
+  geom_path(group=1) +  
+  # geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
+  # geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
+  facet_wrap(~country) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences as share of all sentences about the EU",
+       subtitle = "Black dotted lines are parliamentary elections, dotted blue lines are European elections") +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'country'. You can override using the
+    ## `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-6-2.png)<!-- --> \##
+Now doing the same by party for each country:
+
+``` r
+data |>
+  filter(country == "AUS" & eu_mention == 1) |>
+  group_by(name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "AUS"), 
+            by = c("year_month")) |>
+  ggplot(aes(x = year_month, y = prop_eu)) +
+  geom_path(group=1) +  
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
+  facet_wrap(~ name_short) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Austria as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'name_short'. You can override using the
+    ## `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+data |>
+  filter(country == "DEU" & eu_mention == 1) |>
+  group_by(name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "DEU"), 
+            by = c("year_month")) |>
+  ggplot(aes(x = year_month, y = prop_eu)) +
+  geom_path(group=1) +  
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
+  facet_wrap(~ name_short) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Germany as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'name_short'. You can override using the
+    ## `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+
+``` r
+data |>
+  filter(country == "DNK" & eu_mention == 1) |>
+  group_by(name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "DNK"), 
+            by = c("year_month")) |>
+  ggplot(aes(x = year_month, y = prop_eu)) +
+  geom_path(group=1) +  
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
+  facet_wrap(~ name_short) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Denmark as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'name_short'. You can override using the
+    ## `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+
+``` r
+data |>
+  filter(country == "ESP" & eu_mention == 1) |>
+  group_by(name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+ ungroup() |> 
+left_join(data_dates |>
+            filter(country == "ESP"), 
+          by = c("year_month")) |>
+  ggplot(aes(x = year_month, y = prop_eu)) +
+  geom_path(group=1) +  
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
+  facet_wrap(~ name_short, ncol = 1) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Spain as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'name_short'. You can override using the
+    ## `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
+
+``` r
+data |>
+  filter(country == "GBR" & eu_mention == 1) |>
+  group_by(name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "GBR"), 
+            by = c("year_month")) |>
+  ggplot(aes(x = year_month, y = prop_eu)) +
+  geom_path(group=1) +  
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
+  facet_wrap(~ name_short) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in the UK as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'name_short'. You can override using the
+    ## `.groups` argument.
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_vline()`).
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
+
+``` r
+data |>
+  filter(country == "NLD" & eu_mention == 1) |>
+  group_by(name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "NLD"), 
+            by = c("year_month")) |>
+  ggplot(aes(x = year_month, y = prop_eu)) +
+  geom_path(group=1) +  
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
+  facet_wrap(~ name_short) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in the Netherlands as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'name_short'. You can override using the
+    ## `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-7-6.png)<!-- -->
+
+``` r
+data |>
+  filter(country == "SWE" & eu_mention == 1) |>
+  group_by(name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |> 
+  left_join(data_dates |>
+              filter(country == "SWE"), 
+            by = c("year_month")) |>
+  ggplot(aes(x = as.factor(year_month), y = prop_eu)) +
+  geom_path(group=1) +  
+  geom_smooth(aes(x = as.numeric(as.factor(year_month))),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.2) +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
+  facet_wrap(~ name_short) +
+  labs(x = "Year",
+       y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Sweden as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+```
+
+    ## `summarise()` has grouped output by 'name_short'. You can override using the
+    ## `.groups` argument.
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-7-7.png)<!-- -->
+
+``` r
+data |>
+  filter(eu_mention == 1) |>
+  group_by(country, name_short, year_month) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |>
+  ggplot(aes(x = reorder(name_short, prop_eu),
+             y = prop_eu,
+             colour = country,
+             fill = country)) +
+  geom_boxplot(alpha = 0.2) +
+  #facet_wrap(~ country, scales = "free")
+  coord_flip() +
+  scale_color_brewer(name = "", palette = "Dark2") +
+  scale_fill_brewer(name = "", palette = "Dark2") +
+  labs(x = "", y = "Share of Eurosceptic sentences",
+       title = "Monthly share of Eurosceptic sentences by party")
+```
+
+    ## `summarise()` has grouped output by 'country', 'name_short'. You can override
+    ## using the `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+data |>
+  filter(eu_mention == 1) |>
+  group_by(country, name_short, year) |> 
+  summarise(
+    n = n(),
+    prop_eu = 100*mean(eu_stance)
+  ) |> 
+  ungroup() |>
+  ggplot(aes(x = reorder(name_short, prop_eu),
+             y = prop_eu,
+             colour = country,
+             fill = country)) +
+  geom_boxplot(alpha = 0.2) +
+  #facet_wrap(~ country, scales = "free")
+  coord_flip() +
+  scale_color_brewer(name = "", palette = "Dark2") +
+  scale_fill_brewer(name = "", palette = "Dark2") +
+  labs(x = "", y = "Share of Eurosceptic sentences",
+       title = "Yearly share of Eurosceptic sentences by party")
+```
+
+    ## `summarise()` has grouped output by 'country', 'name_short'. You can override
+    ## using the `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
 
 ## Cleaning Eurobarometer data
 
@@ -912,7 +1299,7 @@ ebjoint_mem |>
     ## `summarise()` has grouped output by 'year', 'country'. You can override using
     ## the `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 ebjoint_trust <- eb70_02 |>
@@ -957,7 +1344,7 @@ ebjoint_trust |>
     ## `summarise()` has grouped output by 'year', 'country'. You can override using
     ## the `.groups` argument.
 
-![](regression_prep_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](regression_prep_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 ebjoin <- eb70_02 |>
