@@ -1,0 +1,1141 @@
+---
+title: "Regressions"
+author: "Duarte Amaro"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(marginaleffects)
+library(modelsummary)
+
+theme_set(theme_bw() +
+            theme(legend.position = "bottom"))
+
+```
+
+# Descriptive Statistics
+
+## Salience 
+
+### Plotting the frequency of speeches by party and country:
+
+```{r, fig.width=12, fig.height=10}
+
+data_monthly <- read_csv("data_monthly.csv") |>
+  mutate(year_month = factor(year_month))
+
+data_yearly <- read_csv("data_yearly.csv")
+
+data_monthly |>
+  filter(country == "AUS") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_eu_mention)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  ylim(0, 15) +
+  labs(x = "Year",
+       y = "Share of sentences about the EU",
+       title = "Share of sentences about the EU in Austria by party") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "DEU") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_eu_mention)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  ylim(0, 15) +
+  labs(x = "Year",
+       y = "Share of sentences about the EU",
+       title = "Share of sentences about the EU in Germany by party") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "DNK") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_eu_mention)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  ylim(0, 15) +
+  labs(x = "Year",
+       y = "Share of sentences about the EU",
+       title = "Share of sentences about the EU in Denmark by party") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "ESP") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_eu_mention)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  ylim(0, 15) +
+  labs(x = "Year",
+       y = "Share of sentences about the EU",
+       title = "Share of sentences about the EU in Spain by party") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "NLD") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_eu_mention)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  ylim(0, 15) +
+  labs(x = "Year",
+       y = "Share of sentences about the EU",
+       title = "Share of sentences about the EU in the Netherlands by party") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "SWE") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_eu_mention)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  ylim(0, 15) +
+  labs(x = "Year",
+       y = "Share of sentences about the EU",
+       title = "Share of sentences about the EU in Sweden by party") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "GBR") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_eu_mention)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  #ylim(0, 15) +
+  labs(x = "Year",
+       y = "Share of sentences about the EU",
+       title = "Share of sentences about the EU in the UK by party") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+```
+
+```{r, fig.height=10, fig.width=9}
+
+data_monthly |>
+  ggplot(aes(x = reorder(name_short, prop_eu_mention),
+             y = prop_eu_mention,
+             colour = country,
+             fill = country)) +
+  geom_boxplot(alpha = 0.2) +
+  #facet_wrap(~ country, scales = "free")
+  coord_flip() +
+  scale_color_brewer(name = "", palette = "Dark2") +
+  scale_fill_brewer(name = "", palette = "Dark2") +
+  labs(x = "", y = "Share of sentences about the EU",
+       title = "Monthly share of sentences about the EU by party")
+
+```
+
+## Position
+
+### Share of Eurosceptic sentences by country by party for each country:
+
+```{r, fig.width=12, fig.height=10}
+
+data_monthly |>
+  filter(country == "AUS") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_euroscepticism)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  #ylim(0, 15) +
+  labs(x = "Year",
+        y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Austria as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "DEU") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_euroscepticism)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  #ylim(0, 15) +
+  labs(x = "Year",
+        y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Germany as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "DNK") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_euroscepticism)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  #ylim(0, 15) +
+  labs(x = "Year",
+        y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Denmark as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "ESP") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_euroscepticism)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  #ylim(0, 15) +
+  labs(x = "Year",
+        y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Spain as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "NLD") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_euroscepticism)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  #ylim(0, 15) +
+  labs(x = "Year",
+        y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in the Netherlands as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "SWE") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_euroscepticism)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  #ylim(0, 15) +
+  labs(x = "Year",
+        y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in Sweden as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+data_monthly |>
+  filter(country == "GBR") |>
+  mutate(election_year_month = case_when(
+    time_to_next == 0 ~ 1,
+    .default = 0)) |>
+  ggplot(aes(x = year_month, y = prop_euroscepticism)) +
+  #geom_path(group=1, alpha = 0.4) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(aes(x = as.numeric(year_month)),
+              alpha = 0.2, colour = "blue", fill = "blue",
+              span = 0.5) +
+  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short) +
+  ylim(0, 75) +
+  labs(x = "Year",
+        y = "Share of Eurosceptic sentences",
+       title = "Eurosceptic sentences in the UK as share of all sentences about the EU") +
+  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
+                   labels = c("1999", "2004", "2009", "2014", "2019")) +
+  theme(panel.spacing.x = unit(5, "mm"))
+
+```
+
+```{r, fig.height=10, fig.width=9}
+
+data_monthly |>
+  group_by(country, name_short) |>
+  mutate(mean_euroscepticism = mean(prop_euroscepticism, na.rm = TRUE)) |>
+  ungroup() |>
+  arrange(mean_euroscepticism) |>
+  ggplot(aes(x = reorder(name_short, mean_euroscepticism),
+             y = prop_euroscepticism,
+             colour = country,
+             fill = country)) +
+  geom_boxplot(alpha = 0.2) +
+  #facet_wrap(~ country, scales = "free")
+  coord_flip() +
+  scale_color_brewer(name = "", palette = "Dark2") +
+  scale_fill_brewer(name = "", palette = "Dark2") +
+  labs(x = "", y = "Share of Eurosceptic sentences",
+       title = "Monthly share of Eurosceptic sentences by party")
+
+```
+
+## Plotting salience against position
+
+```{r, fig.height=10, fig.width=12}
+
+data_monthly |>
+  ggplot(aes(x = prop_eu_mention, y = prop_euroscepticism, 
+             colour = country, fill = country)) +
+  geom_point(alpha = 0.1) +
+  #geom_smooth(method = "lm", alpha = 0.2) +
+  facet_wrap(~ country, scales = "free") +
+  labs(x = "Share of sentences about the EU",
+       y = "Share of Eurosceptic sentences",
+       title = "Overall share of Eurosceptic sentences against monthly share of sentences about the EU")
+
+```
+
+
+# Regressions
+
+## Using RRP voteshare in the last election
+
+### Pooled
+
+```{r}
+
+reg_data <- read_csv("reg_data.csv") |>
+  mutate(year_month = factor(year_month))
+
+m1 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party)
+
+m2 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m3 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               time_to_next*rrp_voteshare + parlgov_id)
+
+m4 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + family_name +
+               family_name*rrp_voteshare + parlgov_id)
+
+m5 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + family_2 +
+               family_2*rrp_voteshare + parlgov_id)
+
+m6 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id +
+               change_voteshare*rrp_voteshare + parlgov_id)
+
+stargazer::stargazer(m1, m2, m3, m4, m5, m6,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 1: Regression Using RRP Vote Share",
+                     #out = "table.html",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                      covariate.labels = c("Time", "Lagged Euroscepticism", 
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "RRP vote share",
+                                           "Party in Government",
+                                           "Liberal Party",
+                                          "Social Democratic Party",
+                                          "Centre-Right Party",
+                                          "Time to next election * RRP vote share",
+                                          "RRP vote share * Liberal",
+                                          "RRP vote share * Social Democrat",
+                                          "RRP vote share * Centre-Right",
+                                          "RRP vote share * Change in vote share"
+                                           ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+# modelsummary(list(m1, m2, m3, m4, m5, m6),
+#              output = "markdown",
+#              stars = TRUE,
+#              coef_omit = "parlgov_id|country",
+#              title = "Table 1: Regression Using RRP Vote Share",
+#              coef_rename = c("as.numeric(year_month)" = "Time", 
+#                              "lag_prop_euroscepticism" = "Lagged Euroscepticism", 
+#                             "time_to_next" = "Time to next election (months)",
+#                                         "time_to_next_ep" =  "Time to next EP election (months)",
+#                                          "vote_share" = "Party size (vote share)",
+#                                           "change_voteshare" = "Change in vote share",
+#                                           "rrp_voteshare" = "RRP vote share",
+#                                           "cabinet_party" = "Party in Government",
+#                                           "family_nameLib" = "Liberal Party",
+#                                         "family_nameSocDem" =  "Social Democratic Party",
+#                                         "family_2Centre-right" =  "Centre-Right Party")
+#              )
+
+
+```
+
+### Per country
+
+```{r}
+
+m_aus1 <- lm(data = reg_data |> filter(country == "AUS"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m_aus2 <- lm(data = reg_data |> filter(country == "AUS"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + time_to_next*rrp_voteshare)
+
+m_aus3 <- lm(data = reg_data |> filter(country == "AUS"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*rrp_voteshare)
+
+m_deu1 <- lm(data = reg_data |> filter(country == "DEU"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m_deu2 <- lm(data = reg_data |> filter(country == "DEU"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + time_to_next*rrp_voteshare)
+
+m_deu3 <- lm(data = reg_data |> filter(country == "DEU"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*rrp_voteshare)
+
+m_den1 <- lm(data = reg_data |> filter(country == "DNK"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m_den2 <- lm(data = reg_data |> filter(country == "DNK"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + time_to_next*rrp_voteshare)
+
+m_den3 <- lm(data = reg_data |> filter(country == "DNK"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*rrp_voteshare)
+
+m_swe1 <- lm(data = reg_data |> filter(country == "SWE"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m_swe2 <- lm(data = reg_data |> filter(country == "SWE"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + time_to_next*rrp_voteshare)
+
+m_swe3 <- lm(data = reg_data |> filter(country == "SWE"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*rrp_voteshare)
+
+m_esp1 <- lm(data = reg_data |> filter(country == "ESP"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m_esp2 <- lm(data = reg_data |> filter(country == "ESP"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + time_to_next*rrp_voteshare)
+
+m_esp3 <- lm(data = reg_data |> filter(country == "ESP"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*rrp_voteshare)
+
+m_nld1 <- lm(data = reg_data |> filter(country == "NLD"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m_nld2 <- lm(data = reg_data |> filter(country == "NLD"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + time_to_next*rrp_voteshare)
+
+m_nld3 <- lm(data = reg_data |> filter(country == "NLD"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*rrp_voteshare)
+
+m_uk1 <- lm(data = reg_data |> filter(country == "GBR"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id)
+
+m_uk2 <- lm(data = reg_data |> filter(country == "GBR"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + time_to_next*rrp_voteshare)
+
+m_uk3 <- lm(data = reg_data |> filter(country == "GBR"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*rrp_voteshare)
+
+stargazer::stargazer(m_aus1, m_deu1,m_den1, m_swe1, m_esp1, m_nld1, m_uk1,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 2: Regression Using RRP Vote Share Per Country",
+                     #out = "table.html",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                     column.labels = c("AUS", "DEU", "DNK", "SWE", "ESP", "NLD", "GBR"),
+                     covariate.labels = c("Time", "Lagged Euroscepticism",
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "RRP vote share",
+                                           "Party in Government"
+                                           ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+stargazer::stargazer(m_aus2, m_deu2,m_den2, m_swe2, m_esp2, m_nld2, m_uk2,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 3: Interaction between RRP Vote Share and Time to Next Election Per Country",
+                     #out = "table.html",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                     column.labels = c("AUS", "DEU", "DNK", "SWE", "ESP", "NLD", "GBR"),
+                      covariate.labels = c("Time", "Lagged Euroscepticism",
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "RRP vote share",
+                                           "Party in Government",
+                                          "Time to next election * RRP vote share"
+                                           ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+stargazer::stargazer(m_aus3, m_deu3, m_den3, m_swe3, m_esp3, m_nld3, m_uk3,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 4: Interaction between RRP Vote Share and Change in Vote Share Per Country",
+                     #out = "table.html",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                     column.labels = c("AUS", "DEU", "DNK", "SWE", "ESP", "NLD", "GBR"),
+                      covariate.labels = c("Time", "Lagged Euroscepticism",
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "RRP vote share",
+                                           "Party in Government",
+                                          "RRP vote share * Change in vote share"
+                                            ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+
+```
+
+## Using Polled RRP Vote Intention
+
+### Pooled
+
+```{r}
+
+mp1 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party)
+
+mp2 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp3 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               time_to_next*lag_rrp_polled_voteshare + parlgov_id)
+
+mp4 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_name +
+               family_name*lag_rrp_polled_voteshare)
+
+mp5 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_2 +
+               family_2*lag_rrp_polled_voteshare )
+
+mp6 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + parlgov_id +
+               change_voteshare*lag_rrp_polled_voteshare + parlgov_id)
+
+stargazer::stargazer(mp1, mp2, mp3, mp4, mp5, mp6,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 5: Regression Using Polled RRP Vote",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                    covariate.labels = c("Time", "Lagged Euroscepticism", 
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "Polled RRP Vote",
+                                           "Party in Government",
+                                         "Time to next election * Polled RRP vote share",
+                                           "Liberal Party",
+                                          "Social Democratic Party",
+                                          "Polled RRP vote share * Liberal",
+                                          "RRP vote share * Social Democrat",
+                                         "Centre-Right Party",
+                                          "Polled RRP vote share * Centre-Right",
+                                          "Polled RRP vote share * Change in vote share"
+                                           ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+
+```
+
+```{r}
+
+plot_slopes(mp4, variables = "lag_rrp_polled_voteshare", 
+            by = "family_name") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  labs(title = "Effect of Polled RRP Vote Share on Euroscepticism by Party Family",
+            xlab = "Polled RRP Vote Share (%)",
+            ylab = "Euroscepticism (Share of Eurosceptic Sentences)")
+
+```
+### Per country
+
+```{r}
+
+mp_aus1 <- lm(data = reg_data |> filter(country == "AUS"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp_aus2 <- lm(data = reg_data |> filter(country == "AUS"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+
+mp_aus3 <- lm(data = reg_data |> filter(country == "AUS"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+
+mp_deu1 <- lm(data = reg_data |> filter(country == "DEU"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp_deu2 <- lm(data = reg_data |> filter(country == "DEU"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+
+mp_deu3 <- lm(data = reg_data |> filter(country == "DEU"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+
+mp_den1 <- lm(data = reg_data |> filter(country == "DNK"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp_den2 <- lm(data = reg_data |> filter(country == "DNK"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+
+mp_den3 <- lm(data = reg_data |> filter(country == "DNK"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+
+mp_swe1 <- lm(data = reg_data |> filter(country == "SWE"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp_swe2 <- lm(data = reg_data |> filter(country == "SWE"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+
+mp_swe3 <- lm(data = reg_data |> filter(country == "SWE"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+
+mp_esp1 <- lm(data = reg_data |> filter(country == "ESP"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp_esp2 <- lm(data = reg_data |> filter(country == "ESP"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+
+mp_esp3 <- lm(data = reg_data |> filter(country == "ESP"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+
+mp_nld1 <- lm(data = reg_data |> filter(country == "NLD"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp_nld2 <- lm(data = reg_data |> filter(country == "NLD"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+
+mp_nld3 <- lm(data = reg_data |> filter(country == "NLD"),
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + 
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+
+stargazer::stargazer(mp_aus1, mp_deu1,mp_den1, mp_swe1, mp_esp1, mp_nld1,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 6: Regression Using Polled RRP Vote Per Country",
+                     #out = "table.html",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                     column.labels = c("AUS", "DEU", "DNK", "SWE", "ESP", "NLD"),
+                     covariate.labels = c("Time", "Lagged Euroscepticism",
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "Polled RRP Vote",
+                                           "Party in Government"
+                                           ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+stargazer::stargazer(mp_aus2, mp_deu2,mp_den2, mp_swe2, mp_esp2, mp_nld2,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 7: Interaction between Polled RRP Vote and Time to Next Election Per Country",
+                     #out = "table.html",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                     column.labels = c("AUS", "DEU", "DNK", "SWE", "ESP", "NLD"),
+                      covariate.labels = c("Time", "Lagged Euroscepticism",
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "Polled RRP Vote",
+                                           "Party in Government",
+                                          "Time to next election * Polled RRP Vote"
+                                           ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+stargazer::stargazer(mp_aus3, mp_deu3, mp_den3, mp_swe3, mp_esp3, mp_nld3,
+                     omit.labels = c("Party", "Country"),
+                     type = "text", title = "Table 8: Interaction between Polled RRP Vote and Change in Vote Share Per Country",
+                     #out = "table.html",
+                     dep.var.labels = "Share of Eurosceptic sentences",
+                     column.labels = c("AUS", "DEU", "DNK", "SWE", "ESP", "NLD"),
+                      covariate.labels = c("Time", "Lagged Euroscepticism",
+                                          "Time to next election (months)",
+                                          "Time to next EP election (months)",
+                                           "Party size (vote share)",
+                                           "Change in vote share",
+                                           "Polled RRP Vote",
+                                           "Party in Government",
+                                          "Polled RRP Vote * Change in vote share"
+                                            ),
+                     omit = c("parlgov_id", "country"),
+                     omit.stat = c("f", "ser"))
+
+```
+
+# Election window regression
+
+```{r}
+
+# reg2_data <- reg_data |>
+#   filter((time_from_last <= 12 | time_to_next <= 12)) |>
+#   group_by(country, name_short, year_month) |> 
+#   mutate(
+#     prop_eu_mention = 100*mean(eu_mention),
+#     prop_euroscepticism = 100*mean(eu_stance, na.rm = TRUE)
+#   ) |> 
+#   ungroup() |>
+#   dplyr::select(country, parlgov_id, name_short, 
+#                 name, name_english, year_month, 
+#                 last_election_year_month, next_election_year_month,
+#                 time_from_last, time_to_next, time_to_next_ep, 
+#                 prop_eu_mention, prop_euroscepticism, vote_share, 
+#                 lag_rrp_voteshare, change_voteshare, cabinet_party) |>
+#   distinct() |>
+#   # I want to add a variable that measures whether last_election_year_month is the first, second, third, etc., election in the data for each country
+#   group_by(country) |>
+#   arrange(last_election_year_month) |>
+#   mutate(
+#     election_number = as.numeric(factor(last_election_year_month, 
+#                                         levels = unique(last_election_year_month))) |>
+#       as.factor()
+#   ) |>
+#   ungroup() |>
+#   group_by(country, name_short) |>
+#   mutate(
+#     lag__prop_eu_mention = lag(prop_eu_mention, order_by = year_month),
+#     change_eu_mention = prop_eu_mention - lag__prop_eu_mention,
+#     
+#     lag_prop_euroscepticism = lag(prop_euroscepticism, order_by = year_month),
+#     change_euroscepticism = prop_euroscepticism - lag_prop_euroscepticism
+#   ) |>
+#   ungroup() |>
+#   left_join(read_csv("view_party.csv") |>
+#               filter(country_name_short %in% c("AUT", "DEU", "DNK", "ESP", "GBR", "NLD", "SWE")) |>
+#               mutate(
+#                 country = case_when(
+#                   country_name_short == "AUT" ~ "AUS",
+#                   is.na(country_name_short) ~ NA,
+#                   .default = country_name_short)
+#                 ) |>
+#               rename(parlgov_id = party_id) |>
+#               dplyr::select(c(country, family_name, parlgov_id))
+#             ) |>
+#   mutate(
+#     family_name = case_when(
+#       family_name %in% c("Conservative", "Christian democracy") ~ "Con/CD",
+#       family_name == "Liberal" ~ "Lib",
+#       family_name == "Social democracy" ~ "SocDem",
+#       .default = NA
+#     ) |> as.factor(),
+#     family_2 = case_when(
+#       family_name %in% c("Con/CD", "Lib") ~ "Centre-right",
+#       family_name %in% c("SocDem") ~ "Centre-left",
+#       .default = NA
+#     ) |> as.factor()
+#   ) |> 
+#   left_join(polls, 
+#             by = c("country", "year_month")) |>
+#   mutate(parlgov_id = as.factor(parlgov_id))
+# 
+# m1 <- lm(data = reg2_data,
+#              prop_euroscepticism ~ time_from_last + 
+#                lag_prop_euroscepticism + country + election_number +
+#                time_to_next + time_to_next_ep + vote_share + 
+#                change_voteshare + lag_rrp_polled_voteshare + cabinet_party)
+# 
+# m2 <- lm(data = reg2_data,
+#              prop_euroscepticism ~ time_from_last + 
+#                lag_prop_euroscepticism + country + election_number +
+#                time_to_next + time_to_next_ep + vote_share + 
+#                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+#                parlgov_id)
+# 
+# m3 <- lm(data = reg2_data,
+#              prop_euroscepticism ~ time_from_last + 
+#                lag_prop_euroscepticism + country + election_number +
+#                time_to_next + time_to_next_ep + vote_share + 
+#                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+#                time_to_next*lag_rrp_polled_voteshare + parlgov_id)
+# 
+# m4 <- lm(data = reg2_data,
+#              prop_euroscepticism ~ time_from_last + 
+#                lag_prop_euroscepticism + country + election_number +
+#                time_to_next + time_to_next_ep + vote_share + 
+#                change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_name +
+#                family_name*lag_rrp_polled_voteshare)
+# 
+# m5 <- lm(data = reg2_data,
+#              prop_euroscepticism ~ time_from_last + 
+#                lag_prop_euroscepticism + country + election_number +
+#                time_to_next + time_to_next_ep + vote_share + 
+#                change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_2 +
+#                family_2*lag_rrp_polled_voteshare)
+# 
+# m6 <- lm(data = reg2_data,
+#              prop_euroscepticism ~ time_from_last + 
+#                lag_prop_euroscepticism + country + election_number +
+#                time_to_next + time_to_next_ep + vote_share + 
+#                change_voteshare + lag_rrp_polled_voteshare + cabinet_party + parlgov_id +
+#                change_voteshare*lag_rrp_polled_voteshare)
+# 
+# 
+# m7 <- lm(data = reg2_data,
+#              prop_euroscepticism ~ time_from_last + 
+#                lag_prop_euroscepticism + country + election_number +
+#                poly(time_to_next, 2) + time_to_next_ep + vote_share + 
+#                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+#                parlgov_id)
+# 
+# # m5 <- lm(data = reg2_data,
+# #              change_euroscepticism ~ time_from_last + 
+# #                country + election_number + time_to_next + time_to_next_ep + vote_share + 
+# #                change_voteshare + lag_rrp_voteshare + cabinet_party)
+# # 
+# # m6 <- lm(data = reg2_data,
+# #              change_euroscepticism ~ time_from_last + 
+# #                country + election_number + time_to_next + time_to_next_ep + vote_share + 
+# #                change_voteshare + lag_rrp_voteshare + cabinet_party +
+# #                parlgov_id)
+# # 
+# # m7 <- lm(data = reg2_data,
+# #              change_euroscepticism ~ time_from_last + 
+# #                country + election_number + time_to_next + time_to_next_ep + vote_share + 
+# #                change_voteshare + lag_rrp_voteshare + cabinet_party +
+# #                time_to_next*lag_rrp_voteshare)
+# # 
+# # m8 <- lm(data = reg2_data,
+# #              change_euroscepticism ~ time_from_last + 
+# #                country + election_number + time_to_next + time_to_next_ep + vote_share + 
+# #                change_voteshare + lag_rrp_voteshare + cabinet_party + family_name +
+# #                family_name*lag_rrp_voteshare)
+# 
+# stargazer::stargazer(m1, m2, m3, m4, m5, m6, m7,
+#                      omit.labels = c("Party", "Country"),
+#                      type = "text", title = "Preliminary regression results",
+#                      #out = "table.html",
+#                      #dep.var.labels = "Share of Eurosceptic sentences",
+#                      # covariate.labels = c("Time to next election (days)", 
+#                      #                      "Time to next EP election (days)",
+#                      #                      "Vote share (%)", 
+#                      #                      "Change in vote share (%)",
+#                      #                      "RRP vote share (%)"),
+#                      omit = c("parlgov_id", "country"),
+#                      omit.stat = c("f", "ser"))
+# 
+# #plot_slopes(m4, variables = "rrp_voteshare", condition = c("family_name") ) 
+# 
+# 
+# # newdata <- data.frame(
+# #   lag_prop_euroscepticism = rep(mean(reg2_data$lag_prop_euroscepticism, na.rm = TRUE), 25),
+# #   country = rep(factor("AUS"), 25),
+# #   election_number = c(rep(1, 12), rep(2, 13)) |> as.factor(),
+# #   time_from_last = c(seq(32, (32+11), by = 1), seq(0, 12, by = 1)),
+# #   time_to_next = c(seq(12, 0, by = -1), seq(41, (41-11), by = -1)),
+# #   time_to_next_ep = rep(28, 25),
+# #   vote_share = rep(mean(reg2_data$vote_share, na.rm = TRUE), 25),
+# #   change_voteshare = rep(mean(reg2_data$change_voteshare, na.rm = TRUE), 25),
+# #   rrp_voteshare = rep(mean(reg2_data$rrp_voteshare, na.rm = TRUE), 25),
+# #   cabinet_party = rep(0, 25),
+# #   family_name = rep(factor("Con/CD"), 25)
+# # )
+# # 
+# # plot_predictions(m1,
+# #                  newdata = newdata,
+# #                  by = "time_from_last",
+# #                  draw = FALSE
+# #                  ) |> View()
+# 
+# 
+# ## Run time_to_next*rr_polled_voteshare per country
+
+```
+

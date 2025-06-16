@@ -9,11 +9,11 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
-
-theme_set(theme_bw() +
-            theme(legend.position = "bottom"))
+library(readxl)
 
 ```
+
+# Data cleaning
 
 ## Model structure and variables
 
@@ -23,78 +23,107 @@ The controls are RRP voteshare, own party vote loss, time to the next parliament
 
 ## Cleaning LLM-Classified Speeches
 
+The following code is commented out because importing and reading the entire data set is slow and inexpedient once monthly frequencies are calculated.
+
 ```{r}
 
-eu_mentions <- read_csv("EU_Speeches_classified.csv") |>
-  mutate(
-    year = as.numeric(format(date, "%Y")),
-    year_month = as.factor(format(date, "%Y-%m"))
-  ) |>
-  rename(country = iso3country,
-         eu_mention = EU_2,
-         partyfacts_id = party.facts.id) |>
-  dplyr::select(-"...1") |>
-  distinct()
+# eu_mentions <- read_csv("EU_Speeches_classified.csv") |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU_2,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-"...1") |>
+#   distinct()
+# 
+# summary(eu_mentions)
+# 
+# sum(is.na(eu_mentions$eu_mention)) ## Confirming all speeches have been assigned EU stance
+# 
+# nonEU_speeches <- read_csv("NonEU_Speeches.csv") |>
+#   mutate(
+#     eu_mention = 0,
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-c("...1", "Unnamed: 0")) |>
+#   distinct()
+# 
+# nonEU_speeches_UK <- read_csv("UK_NonEU.csv") |>
+#   mutate(
+#     eu_mention = 0,
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-"...1") |>
+#   distinct()
+# 
+# eu_stance <- read_csv("EU_stance_classified_V2.csv") |>
+#   mutate(
+#     Stance = as.numeric(Stance),
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU_2,
+#          eu_stance = Stance,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-"Unnamed: 0") |>
+#   distinct()
+# 
+# data0 <- eu_mentions |>
+#   bind_rows(
+#     nonEU_speeches
+#   ) |>
+#   bind_rows(
+#     nonEU_speeches_UK
+#   )
+# 
+# data_yearly <- data0 |>
+#   left_join(eu_stance) |>
+#   group_by(country, partyfacts_id, year) |> 
+#   summarise(
+#     prop_eu_mention = 100*mean(eu_mention),
+#     prop_euroscepticism = 100*mean(eu_stance, na.rm = TRUE)
+#   ) |> 
+#   ungroup()
+# 
+# write.csv(data_yearly, "data_yearly.csv", row.names = FALSE)
+# 
+# data_monthly_0 <- data0 |>
+#   left_join(eu_stance) |>
+#   group_by(country, partyfacts_id, year_month) |> 
+#   summarise(
+#     prop_eu_mention = 100*mean(eu_mention),
+#     prop_euroscepticism = 100*mean(eu_stance, na.rm = TRUE)
+#   ) |> 
+#   ungroup()
+# 
+# write.csv(data_monthly_0, "data_monthly_0.csv", row.names = FALSE)
 
-summary(eu_mentions)
-
-sum(is.na(eu_mentions$eu_mention)) ## Confirming all speeches have been assigned EU stance
-
-nonEU_speeches <- read_csv("NonEU_Speeches.csv") |>
-  mutate(
-    eu_mention = 0,
-    year = as.numeric(format(date, "%Y")),
-    year_month = as.factor(format(date, "%Y-%m"))
-  ) |>
-  rename(country = iso3country,
-         partyfacts_id = party.facts.id) |>
-  dplyr::select(-c("...1", "Unnamed: 0")) |>
-  distinct()
-
-nonEU_speeches_UK <- read_csv("UK_NonEU.csv") |>
-  mutate(
-    eu_mention = 0,
-    year = as.numeric(format(date, "%Y")),
-    year_month = as.factor(format(date, "%Y-%m"))
-  ) |>
-  rename(country = iso3country,
-         partyfacts_id = party.facts.id) |>
-  dplyr::select(-"...1") |>
-  distinct()
-
-eu_stance <- read_csv("EU_stance_classified_V2.csv") |>
-  mutate(
-    Stance = as.numeric(Stance),
-    year = as.numeric(format(date, "%Y")),
-    year_month = as.factor(format(date, "%Y-%m"))
-  ) |>
-  rename(country = iso3country,
-         eu_mention = EU_2,
-         eu_stance = Stance,
-         partyfacts_id = party.facts.id) |>
-  dplyr::select(-"Unnamed: 0") |>
-  distinct()
-
-data0 <- eu_mentions |>
-  bind_rows(
-    nonEU_speeches
-  ) |>
-  bind_rows(
-    nonEU_speeches_UK
-  )
-
-data0.2 <- data0 |>
-  left_join(eu_stance)
+data_monthly_0 <- read_csv("data_monthly_0.csv") |>
+  mutate(year_month = as.factor(year_month))
 
 ```
 
 ## Cleaning ParlGov and merging with speeches
 
 ```{r}
+
 ## Getting parlgov and partyfacts codes:
 
 partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
-  filter((partyfacts_id %in% unique(data0$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
+  filter((partyfacts_id %in% unique(data_monthly_0$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
            dataset_key == "parlgov" &
            year_last >= 1998) |>
   rename(parlgov_id = dataset_party_id,
@@ -102,23 +131,29 @@ partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
 
 ## Merging partyfacts and parlgov codes with speeches
 
-data <- data0.2 |> 
-  dplyr::select(country, party, partyfacts_id) |> 
-  distinct() |> 
-  mutate(partyfacts_id = case_when(
-    partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
-    .default = partyfacts_id
-  )) |>
-  full_join(partyfacts_to_parlgov, by = "partyfacts_id") |> 
-  dplyr::select(country, partyfacts_id, parlgov_id, party, name_short, name, name_english) |>
-  full_join(data0.2 |> 
-  mutate(partyfacts_id = case_when(
-    partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
-    .default = partyfacts_id
-  )), by = c("country", "partyfacts_id", "party")) |>
+data_monthly_1 <- data_monthly_0 |>
+  dplyr::select(country, partyfacts_id) |>
+  distinct() |>
+  mutate(partyfacts_id = case_when(partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
+                                   .default = partyfacts_id)) |>
+  full_join(partyfacts_to_parlgov, by = "partyfacts_id") |>
+  dplyr::select(country,
+                partyfacts_id,
+                parlgov_id,
+                name_short,
+                name,
+                name_english) |>
+  full_join(
+    data_monthly_0 |>
+      mutate(
+        partyfacts_id = case_when(partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
+                                  .default = partyfacts_id)
+      ),
+    by = c("country", "partyfacts_id")
+  ) |>
   mutate(parlgov_id = as.numeric(parlgov_id))
 
-nrow(data) == nrow(data0.2) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
+nrow(data_monthly_1) == nrow(data_monthly_0) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
 
 ## Getting election results from parlgov
 
@@ -134,7 +169,24 @@ parlgov_elections <- read_csv("view_election.csv") |>
   ) |>
   dplyr::select(c(country, election_type, election_date, 
                   vote_share, party_name_short, party_name, 
-                  party_name_english, party_id)) 
+                  party_name_english, party_id)) |>
+  bind_rows(read_csv("view_election.csv") |>           ## ParlGov for some reason disagreggates between CDU and CSU 
+                                                       ## in terms of election results.
+              filter(party_id %in% c(808, 1180) & election_date > as.Date("1990-01-01")) |> 
+              dplyr::select(election_type, election_date, vote_share) |>
+              group_by(election_type, election_date) |>
+              mutate(
+                vote_share = sum(vote_share, na.rm = TRUE)
+                ) |> 
+              distinct() |> 
+              bind_cols(read_csv("view_party.csv") |>
+                          filter(party_id == 1727) |>
+                          dplyr::select(party_name_short, party_name, party_name_english, party_id) |>
+                          slice(rep(1, 15))
+                        ) |>
+              mutate(country = "DEU")
+            )
+
 
 ## Getting right-wing populist parties
 
@@ -155,18 +207,35 @@ tibble(rrp_results |>
          dplyr::select(country, party_name_short, party_name_english) |>
          distinct())
 
+## Getting election dates
+
+election_dates <- parlgov_elections |>
+  dplyr::select(country, election_type, election_date) |>
+  mutate(
+    election_year_month = as.factor(format(election_date, "%Y-%m"))
+  ) |>
+  distinct()
+
 ## Merging with election results to have sum RRP voteshare
 
-parlgov_elections <- parlgov_elections |>
+parlgov_elections <- election_dates |>
   left_join(
     rrp_results |> 
       group_by(election_date, election_type, country) |>
       mutate(rrp_voteshare = sum(vote_share, na.rm = TRUE)) |>
       ungroup() |> 
-      dplyr::select(country, election_type, election_date, rrp_voteshare) |>
+      dplyr:::select(country, election_type, election_date, rrp_voteshare) |>
       distinct(),
     by = c("country", "election_type", "election_date")
-    )
+    ) |>
+      mutate(
+        rrp_voteshare = case_when(
+          is.na(rrp_voteshare) ~ 0,
+          .default = rrp_voteshare
+        )
+      ) |>
+      group_by(country) |>
+  right_join(parlgov_elections)
 
 ## Getting cabinet composition data
 
@@ -184,19 +253,9 @@ parlgov_cab <- read_csv("view_cabinet.csv") |>
                       cabinet_name, cabinet_party, party_id,
                       cabinet_id)) 
 
-
-## Getting election dates
-
-election_dates <- parlgov_elections |>
-  dplyr::select(country, election_type, election_date) |>
-  mutate(
-    election_year_month = as.factor(format(election_date, "%Y-%m"))
-  ) |>
-  distinct()
-
 ## Calculating time to next election
 
-data_election_dates <- data |>
+data_election_dates <- data_monthly_1 |>
   dplyr::select(country, year_month) |>
   distinct() |> # I now want to match the dates to the next closest election:
   left_join(election_dates |> 
@@ -204,18 +263,18 @@ data_election_dates <- data |>
               dplyr::select(country, election_year_month), 
             by = "country") |>
   mutate(
-    time_to_last = round(as.numeric(difftime(as.Date(paste(year_month, "-01", sep = "")),
+    time_from_last = round(as.numeric(difftime(as.Date(paste(year_month, "-01", sep = "")),
                                              as.Date(paste(election_year_month, "-01", sep = "")),
                                              units = "days"))/30)
     ) |>
-  filter(time_to_last >= 0) |> 
+  filter(time_from_last >= 0) |> 
   group_by(country, year_month) |>
-  filter(time_to_last == min(time_to_last)) |>
+  filter(time_from_last == min(time_from_last)) |>
   ungroup() |>
   rename(last_election_year_month = election_year_month) |>
-  dplyr::select(-time_to_last) |>
+  #dplyr::select(-time_to_last) |>
   left_join(
-    data |>
+    data_monthly_1 |>
       dplyr::select(country, year_month) |>
       distinct() |> # I now want to match the dates to the next closest election:
       left_join(election_dates |> 
@@ -270,7 +329,7 @@ cab_dates <- parlgov_cab |>
   ) |>
   distinct()
 
-data_cab_dates <- data |>
+data_cab_dates <- data_monthly_1 |>
   dplyr::select(country, year_month) |>
   distinct() |> # I now want to match the dates to the next closest cabinet:
   left_join(cab_dates |> 
@@ -297,7 +356,9 @@ data_dates <- data_election_dates |>
 
 vote_changes <- parlgov_elections |>  # Calculating change in voteshare
               filter(election_type == "parliament") |>
-              dplyr::select(country, election_date, party_name_short, vote_share, party_id, rrp_voteshare) |>
+              dplyr::select(country, election_date, 
+                            party_name_short, vote_share, 
+                            party_id, rrp_voteshare) |>
               group_by(party_id) |>
               mutate(
                 change_voteshare = vote_share - lag(vote_share, order_by = election_date)
@@ -306,7 +367,7 @@ vote_changes <- parlgov_elections |>  # Calculating change in voteshare
               mutate(last_election_year_month = as.factor(format(election_date, "%Y-%m"))) |>
               rename(parlgov_id = party_id)
 
-data <- data |>
+data_monthly <- data_monthly_1 |>
   left_join(data_dates, 
             by = c("country", "year_month")) |> 
   left_join(vote_changes,
@@ -319,735 +380,180 @@ data <- data |>
             by = c("country", "start_year_month", "cabinet_id", "parlgov_id")) |>
   mutate(year_month = as.factor(year_month))
 
-nrow(data) == nrow(data0.2)
+nrow(data_monthly) == nrow(data_monthly_1)
+
+#write.csv(data_monthly, "data_monthly.csv", row.names = FALSE)
 
 ```
-
-The main control variables are now in the `data` dataframe, which contains the speeches classified by LLMs, the party information, and the election results.
-
-The controls are RRP voteshare, own party vote loss, time to the next parliamentary election, time to the next European election, party size (in terms of vote share), current government participation, a proxy for public support for the EU in the country, a recession dummy variable, and coalition inclusion probabilities. 
-
-| Variable                                  | Variable name         |
-|-------------------------------------------|-----------------------|
-| RRP vote share in the last election       | `rrp_voteshare`       |
-| Own party vote share in the last election | `vote_share`          |
-| Change in own party vote share            | `change_voteshare`    |
-| Time to the next parliamentary election   | `time_to_next`        |
-| Time to the next European election        | `time_to_next_ep`     |
-| Current government participation          | `cabinet_party  `     |
-
-: Variable names in the dataset
-
-# Salience 
-
-## Plotting the frequency of speeches by country
-
-```{r, fig.width=12, fig.height=10}
-
-## Per month:
-
-data |>
-  #filter(eu_stance == 1) |>
-  group_by(country, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |>
-  left_join(data_dates, 
-            by = c("country", "year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1, alpha = 0.4) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.2) +
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~country) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU by country",
-       subtitle = "Black dotted lines are parliamentary elections, dotted blue lines are European elections") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                    labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-## Per year:
-
-data |>
-  dplyr::select(-year_month) |>
-  #filter(eu_stance == 1) |>
-  group_by(country, year) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |>
-  # left_join(data_dates, 
-  #           by = c("country", "year")) |>
-  ggplot(aes(x = year, y = prop_eu)) +
-  geom_path(group=1) +  
-  # geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  # geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~country) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU by country",
-       subtitle = "Black dotted lines are parliamentary elections, dotted blue lines are European elections") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-## Now doing the same by party for each country:
-
-```{r, fig.width=12, fig.height=10}
-
-data |>
-  filter(country == "AUS") |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "AUS"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Austria by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "DEU") |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "DEU"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Germany by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "DNK") |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "DNK"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Denmark by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "ESP") |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
- ungroup() |> 
-left_join(data_dates |>
-            filter(country == "ESP"), 
-          by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short, ncol = 1) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Spain by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "GBR") |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "GBR"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in the UK by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "NLD") |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "NLD"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in the Netherlands by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "SWE") |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "SWE"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Sweden by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-```
-
-```{r, fig.height=10, fig.width=9}
-
-data |>
-  group_by(country, name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |>
-  ggplot(aes(x = reorder(name_short, prop_eu),
-             y = prop_eu,
-             colour = country,
-             fill = country)) +
-  geom_boxplot(alpha = 0.2) +
-  #facet_wrap(~ country, scales = "free")
-  coord_flip() +
-  scale_color_brewer(name = "", palette = "Dark2") +
-  scale_fill_brewer(name = "", palette = "Dark2") +
-  labs(x = "", y = "Share of sentences about the EU",
-       title = "Monthly share of sentences about the EU by party")
-
-data |>
-  group_by(country, name_short, year) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_mention)
-  ) |> 
-  ungroup() |>
-  ggplot(aes(x = reorder(name_short, prop_eu),
-             y = prop_eu,
-             colour = country,
-             fill = country)) +
-  geom_boxplot(alpha = 0.2) +
-  #facet_wrap(~ country, scales = "free")
-  coord_flip() +
-  scale_color_brewer(name = "", palette = "Dark2") +
-  scale_fill_brewer(name = "", palette = "Dark2") +
-  labs(x = "", y = "Share of sentences about the EU",
-       title = "Yearly share of sentences about the EU by party")
-
-```
-
-# Position
-
-## First, plotting aggregate share of Eurosceptic by country (per month and per year)
-
-```{r, fig.width=12, fig.height=10}
-
-## Per month:
-
-data |>
-  filter(eu_mention == 1) |>
-  group_by(country, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |>
-  left_join(data_dates, 
-            by = c("country", "year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~country) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences as share of all sentences about the EU",
-       subtitle = "Black dotted lines are parliamentary elections, dotted blue lines are European elections") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                    labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-## Per year:
-
-data |>
-  dplyr::select(-year_month) |>
-  filter(eu_mention == 1) |>
-  group_by(country, year) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |>
-  # left_join(data_dates, 
-  #           by = c("country", "year")) |>
-  ggplot(aes(x = year, y = prop_eu)) +
-  geom_path(group=1) +  
-  # geom_vline(aes(xintercept = election_year_month), linetype = "dashed", color = "black") +
-  # geom_vline(aes(xintercept = election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~country) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences as share of all sentences about the EU",
-       subtitle = "Black dotted lines are parliamentary elections, dotted blue lines are European elections") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-## Now doing the same by party for each country:
-
-```{r, fig.width=12, fig.height=10}
-
-data |>
-  filter(country == "AUS" & eu_mention == 1) |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "AUS"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences in Austria as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "DEU" & eu_mention == 1) |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "DEU"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences in Germany as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "DNK" & eu_mention == 1) |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "DNK"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences in Denmark as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "ESP" & eu_mention == 1) |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
- ungroup() |> 
-left_join(data_dates |>
-            filter(country == "ESP"), 
-          by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short, ncol = 1) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences in Spain as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "GBR" & eu_mention == 1) |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "GBR"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") + 
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences in the UK as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "NLD" & eu_mention == 1) |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "NLD"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = year_month, y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences in the Netherlands as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-data |>
-  filter(country == "SWE" & eu_mention == 1) |>
-  group_by(name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |> 
-  left_join(data_dates |>
-              filter(country == "SWE"), 
-            by = c("year_month")) |>
-  ggplot(aes(x = as.factor(year_month), y = prop_eu)) +
-  geom_path(group=1) +  
-  geom_smooth(aes(x = as.numeric(as.factor(year_month))),
-              alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.2) +
-  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
-  geom_vline(aes(xintercept = next_election_year_month_ep), linetype = "dotted", color = "blue") +
-  facet_wrap(~ name_short) +
-  labs(x = "Year",
-       y = "Share of Eurosceptic sentences",
-       title = "Eurosceptic sentences in Sweden as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
-  theme(panel.spacing.x = unit(5, "mm"))
-
-```
-
-```{r, fig.height=10, fig.width=9}
-
-data |>
-  filter(eu_mention == 1) |>
-  group_by(country, name_short, year_month) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |>
-  ggplot(aes(x = reorder(name_short, prop_eu),
-             y = prop_eu,
-             colour = country,
-             fill = country)) +
-  geom_boxplot(alpha = 0.2) +
-  #facet_wrap(~ country, scales = "free")
-  coord_flip() +
-  scale_color_brewer(name = "", palette = "Dark2") +
-  scale_fill_brewer(name = "", palette = "Dark2") +
-  labs(x = "", y = "Share of Eurosceptic sentences",
-       title = "Monthly share of Eurosceptic sentences by party")
-
-data |>
-  filter(eu_mention == 1) |>
-  group_by(country, name_short, year) |> 
-  summarise(
-    n = n(),
-    prop_eu = 100*mean(eu_stance)
-  ) |> 
-  ungroup() |>
-  ggplot(aes(x = reorder(name_short, prop_eu),
-             y = prop_eu,
-             colour = country,
-             fill = country)) +
-  geom_boxplot(alpha = 0.2) +
-  #facet_wrap(~ country, scales = "free")
-  coord_flip() +
-  scale_color_brewer(name = "", palette = "Dark2") +
-  scale_fill_brewer(name = "", palette = "Dark2") +
-  labs(x = "", y = "Share of Eurosceptic sentences",
-       title = "Yearly share of Eurosceptic sentences by party")
-
-```
-
 
 ## Cleaning Eurobarometer data
 
 ```{r}
 
-eb70_02 <- haven::read_dta("ZA3521_v2-0-1.dta") |> 
-  filter(year >= 1998 & nation2 %in% c(3, 4, 7, 9, 12, 17, 18)) |>
-  mutate(
-    nation2 = case_when(
-      nation2 == 3 ~ "NLD",
-      nation2 == 4 ~ "DEU",
-      nation2 == 7 ~ "DNK",
-      nation2 == 9 ~ "GBR", 
-      nation2 == 12 ~ "ESP",
-      nation2 == 17 ~ "SWE",
-      nation2 == 18 ~ "AUS" 
-    ) |> as.character()
-  )
+# eb98_02 <- haven::read_dta("ZA3521_v2-0-1.dta") |> 
+#   filter(year >= 1998 & nation2 %in% c(3, 4, 7, 9, 12, 17, 18)) |>
+#   mutate(
+#     nation2 = case_when(
+#       nation2 == 3 ~ "NLD",
+#       nation2 == 4 ~ "DEU",
+#       nation2 == 7 ~ "DNK",
+#       nation2 == 9 ~ "GBR", 
+#       nation2 == 12 ~ "ESP",
+#       nation2 == 17 ~ "SWE",
+#       nation2 == 18 ~ "AUS" 
+#     ) |> as.character()
+#   )
+# 
+# eb04_21 <- haven::read_dta("harmonised_EB_2004-2021_v3-0-0.dta") |> 
+#   filter(country %in% c(3, 4, 7, 9, 12, 17, 18)) |>
+#   mutate(
+#     country = case_when(
+#       country == 3 ~ "NLD",
+#       country == 4 ~ "DEU",
+#       country == 7 ~ "DNK",
+#       country == 9 ~ "GBR", 
+#       country == 12 ~ "ESP",
+#       country == 17 ~ "SWE",
+#       country == 18 ~ "AUS" 
+#     ),
+#     date = as.Date(as.character(intdate_end), format = "%Y%m%d"),
+#     year_month = as.factor(format(date, "%Y-%m"))
+#   )
 
 ```
 
 ```{r}
 
-eb04_21 <- haven::read_dta("harmonised_EB_2004-2021_v3-0-0.dta") |> 
-  filter(country %in% c(3, 4, 7, 9, 12, 17, 18)) |>
-  mutate(
-    country = case_when(
-      country == 3 ~ "NLD",
-      country == 4 ~ "DEU",
-      country == 7 ~ "DNK",
-      country == 9 ~ "GBR", 
-      country == 12 ~ "ESP",
-      country == 17 ~ "SWE",
-      country == 18 ~ "AUS" 
-    ),
-    date = as.Date(as.character(intdate_end), format = "%Y%m%d"),
-    year_moth = as.factor(format(date, "%Y-%m"))
-  )
-
-```
-
-```{r}
-
-ebjoint_mem <- eb70_02 |>
-    mutate(
-    mem = case_when(
-      membrshp == 1 ~ "Good",
-      membrshp == 2 ~ "Neither",
-      membrshp == 3 ~ "Bad",
-      TRUE ~ NA_character_
-    ) |> 
-      factor(levels = c("Good", "Neither", "Bad"))
-  ) |>
-  dplyr::select(nation2, year, mem) |>
-  rename(country = nation2) |>
-  bind_rows(
-    eb04_21 |>
-    mutate(
-    mem = case_when(
-      mem == 1 ~ "Good",
-      mem == 2 ~ "Neither",
-      mem == 3 ~ "Bad",
-      TRUE ~ NA_character_) |> 
-      factor(levels = c("Good", "Neither", "Bad"))
-    ) |>
-      dplyr::select(country, year, mem)
-  )
-
-ebjoint_mem |>
-  filter(!is.na(mem)) |>
-  group_by(year, country, mem) |>
-  summarise(
-    count = n()
-  ) |> 
-  ungroup() |>
-  ggplot(aes(fill = mem, y = count, x = year)) +
-  geom_bar(position = "fill", stat = "identity") +
-  facet_wrap(~ country) +
-  scale_fill_manual(values = c("Good" = "green4", "Neither" = "gold", "Bad" = "red3"), name = "") +
-  labs(x = "Year",
-       y = "Proportion of responses",
-       title = "Membership perception by country",
-       subtitle = "Eurobarometer data")
-
-```
-
-```{r}
-
-ebjoint_trust <- eb70_02 |>
-    mutate(
-    trustec = case_when(
-      trustec == 1 ~ "Trust",
-      trustec == 2 ~ "No Trust",
-      TRUE ~ NA_character_
-    ) |> as.factor()
-  ) |>
-  dplyr::select(nation2, year, trustec) |>
-  rename(country = nation2) |>
-  bind_rows(
-    eb04_21 |>
-    mutate(
-    trustec = case_when(
-      treu_com == 1 ~ "Trust",
-      treu_com == 2 ~ "No Trust",
-      TRUE ~ NA_character_) |> as.factor()
-    ) |>
-      dplyr::select(country, year, trustec)
-  )
-
-ebjoint_trust |>
-  filter(!is.na(trustec)) |>
-  group_by(year, country, trustec) |>
-  # Now to get a count of each response to mem:
-  summarise(
-    count = n()
-  ) |> 
-  ungroup() |>
-  ggplot(aes(fill = trustec, y = count, x = year)) +
-  geom_bar(position = "fill", stat = "identity") +
-  facet_wrap(~ country) +
-  scale_fill_manual(values = c("Trust" = "green4", "No Trust" = "red3"), name = "") +
-  labs(x = "Year",
-       y = "Proportion of responses",
-       title = "Trust in the European Commission by country",
-       subtitle = "Eurobarometer data")
-
-```
-
-```{r}
-
-ebjoin <- eb70_02 |>
-    mutate(
-    mem = case_when(
-      membrshp == 1 ~ "Good",
-      membrshp == 2 ~ "Neither",
-      membrshp == 3 ~ "Bad",
-      TRUE ~ NA_character_) |> 
-      factor(levels = c("Good", "Neither", "Bad")),
-    trustec = case_when(
-      trustec == 1 ~ "Trust",
-      trustec == 2 ~ "No Trust",
-      TRUE ~ NA_character_) |> 
-      as.factor()
-  ) |>
-  dplyr::select(nation2, year, mem, trustec) |>
-  rename(country = nation2) |>
-  bind_rows(
-    eb04_21 |>
-    mutate(
-    mem = case_when(
-      mem == 1 ~ "Good",
-      mem == 2 ~ "Neither",
-      mem == 3 ~ "Bad",
-      TRUE ~ NA_character_) |> 
-      factor(levels = c("Good", "Neither", "Bad")),
-    trustec = case_when(
-      treu_com == 1 ~ "Trust",
-      treu_com == 2 ~ "No Trust",
-      TRUE ~ NA_character_) |> 
-      as.factor()
-    ) |>
-      dplyr::select(country, year, mem, trustec)
-  )
-
-# Calculate the cronbach's alpha for the trust and membership variables
-psych::alpha(ebjoin |>
-               dplyr::select(mem, trustec) |>
-  mutate(
-    mem = as.numeric(mem),
-    trustec = as.numeric(trustec)
-  ) |>
-  na.omit(),
-  check.keys = T)
+# ebjoint_mem <- eb70_02 |>
+#     mutate(
+#     mem = case_when(
+#       membrshp == 1 ~ "Good",
+#       membrshp == 2 ~ "Neither",
+#       membrshp == 3 ~ "Bad",
+#       TRUE ~ NA_character_
+#     ) |> 
+#       factor(levels = c("Good", "Neither", "Bad"))
+#   ) |>
+#   dplyr::select(nation2, year, mem) |>
+#   rename(country = nation2) |>
+#   bind_rows(
+#     eb04_21 |>
+#     mutate(
+#     mem = case_when(
+#       mem == 1 ~ "Good",
+#       mem == 2 ~ "Neither",
+#       mem == 3 ~ "Bad",
+#       TRUE ~ NA_character_) |> 
+#       factor(levels = c("Good", "Neither", "Bad"))
+#     ) |>
+#       dplyr::select(country, year, mem)
+#   )
+# 
+# ebjoint_mem |>
+#   filter(!is.na(mem)) |>
+#   group_by(year, country, mem) |>
+#   summarise(
+#     count = n()
+#   ) |> 
+#   ungroup() |>
+#   ggplot(aes(fill = mem, y = count, x = year)) +
+#   geom_bar(position = "fill", stat = "identity") +
+#   facet_wrap(~ country) +
+#   scale_fill_manual(values = c("Good" = "green4", "Neither" = "gold", "Bad" = "red3"), name = "") +
+#   labs(x = "Year",
+#        y = "Proportion of responses",
+#        title = "Membership perception by country",
+#        subtitle = "Eurobarometer data")
+# 
+# ```
+# 
+# ```{r}
+# 
+# ebjoint_trust <- eb70_02 |>
+#     mutate(
+#     trustec = case_when(
+#       trustec == 1 ~ "Trust",
+#       trustec == 2 ~ "No Trust",
+#       TRUE ~ NA_character_
+#     ) |> as.factor()
+#   ) |>
+#   dplyr::select(nation2, year, trustec) |>
+#   rename(country = nation2) |>
+#   bind_rows(
+#     eb04_21 |>
+#     mutate(
+#     trustec = case_when(
+#       treu_com == 1 ~ "Trust",
+#       treu_com == 2 ~ "No Trust",
+#       TRUE ~ NA_character_) |> as.factor()
+#     ) |>
+#       dplyr::select(country, year, trustec)
+#   )
+# 
+# ebjoint_trust |>
+#   filter(!is.na(trustec)) |>
+#   group_by(year, country, trustec) |>
+#   # Now to get a count of each response to mem:
+#   summarise(
+#     count = n()
+#   ) |> 
+#   ungroup() |>
+#   ggplot(aes(fill = trustec, y = count, x = year)) +
+#   geom_bar(position = "fill", stat = "identity") +
+#   facet_wrap(~ country) +
+#   scale_fill_manual(values = c("Trust" = "green4", "No Trust" = "red3"), name = "") +
+#   labs(x = "Year",
+#        y = "Proportion of responses",
+#        title = "Trust in the European Commission by country",
+#        subtitle = "Eurobarometer data")
+# 
+# ```
+# 
+# ```{r}
+# 
+# ebjoin <- eb70_02 |>
+#     mutate(
+#     mem = case_when(
+#       membrshp == 1 ~ "Good",
+#       membrshp == 2 ~ "Neither",
+#       membrshp == 3 ~ "Bad",
+#       TRUE ~ NA_character_) |> 
+#       factor(levels = c("Good", "Neither", "Bad")),
+#     trustec = case_when(
+#       trustec == 1 ~ "Trust",
+#       trustec == 2 ~ "No Trust",
+#       TRUE ~ NA_character_) |> 
+#       as.factor()
+#   ) |>
+#   dplyr::select(nation2, year, mem, trustec) |>
+#   rename(country = nation2) |>
+#   bind_rows(
+#     eb04_21 |>
+#     mutate(
+#     mem = case_when(
+#       mem == 1 ~ "Good",
+#       mem == 2 ~ "Neither",
+#       mem == 3 ~ "Bad",
+#       TRUE ~ NA_character_) |> 
+#       factor(levels = c("Good", "Neither", "Bad")),
+#     trustec = case_when(
+#       treu_com == 1 ~ "Trust",
+#       treu_com == 2 ~ "No Trust",
+#       TRUE ~ NA_character_) |> 
+#       as.factor()
+#     ) |>
+#       dplyr::select(country, year, mem, trustec)
+#   )
+# 
+# # Calculate the cronbach's alpha for the trust and membership variables
+# psych::alpha(ebjoin |>
+#                dplyr::select(mem, trustec) |>
+#   mutate(
+#     mem = as.numeric(mem),
+#     trustec = as.numeric(trustec)
+#   ) |>
+#   na.omit(),
+#   check.keys = T)
 
 ```
 
@@ -1116,3 +622,243 @@ cip <- read.csv("CIP_dynamic_Austria_1995-2019.csv", sep = ";") |>
   dplyr::select(-c(X, germany))
 
 ```
+
+## Cleaning opinion polls
+
+```{r}
+
+polls_aus <- read_excel("austria_monthly.xlsx") |>
+  dplyr::select(c(3, 2, 5, 8, 10)) 
+  
+colnames(polls_aus)[4:5] <- c("FPO", "BZO")
+
+polls_aus <- polls_aus |> 
+  mutate(month = sprintf("%02d" , month),
+         year_month = as.factor(paste(year, month, sep = "-")),
+         country = "AUS",
+         BZO = case_when(
+           is.na(BZO) ~ 0,
+           TRUE ~ BZO
+         ),
+         FPO = case_when(
+           is.na(FPO) ~ 0,
+           TRUE ~ FPO
+         ),
+         rrp_sum = FPO + BZO) |>
+  group_by(year_month) |>
+  mutate(
+    rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
+  ) |>
+  dplyr::select(country, year_month, rrp_voteshare) |>
+  distinct()
+
+polls_swe <- read_excel("sweden_monthly.xlsx") |>
+  dplyr::select(survey_date, year, month, NyD, SD) |> 
+  mutate(month = sprintf("%02d" , month),
+         year_month = as.factor(paste(year, month, sep = "-")),
+         country = "SWE",
+         NyD = case_when(
+           is.na(NyD) ~ 0,
+           TRUE ~ NyD
+         ),
+         SD = case_when(
+           is.na(SD) ~ 0,
+           TRUE ~ SD
+         ),
+         rrp_sum = NyD + SD) |>
+  group_by(year_month) |>
+  mutate(
+    rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
+  ) |>
+  dplyr::select(country, year_month, rrp_voteshare) |>
+  distinct()
+
+polls_dnk <- read_excel("denmark_monthly.xlsx") |>
+  dplyr::select(survey_date, year, month, DF, HardLine) |> 
+  mutate(month = sprintf("%02d" , month),
+         year_month = as.factor(paste(year, month, sep = "-")),
+         country = "DNK",
+         DF = case_when(
+           is.na(DF) ~ 0,
+           TRUE ~ DF
+         ),
+         HardLine = case_when(
+           is.na(HardLine) ~ 0,
+           TRUE ~ HardLine
+         ),
+         rrp_sum = DF + HardLine) |>
+  group_by(year_month) |>
+  mutate(
+    rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
+  ) |>
+  dplyr::select(country, year_month, rrp_voteshare) |>
+  distinct()
+
+polls_deu <- read_excel("germany_monthly.xlsx", col_types = c("text", "numeric", "date", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "text", "text", "numeric")) |>
+  dplyr::select(survey_date, year, month, AfD) |> 
+  mutate(month = sprintf("%02d" , month),
+         year_month = as.factor(paste(year, month, sep = "-")),
+         country = "DEU",
+         AfD = case_when(
+           is.na(AfD) ~ 0,
+           TRUE ~ AfD
+         )) |>
+  group_by(year_month) |>
+  mutate(
+    rrp_voteshare = mean(AfD, na.rm = TRUE)
+  ) |>
+  dplyr::select(country, year_month, rrp_voteshare) |>
+  distinct()
+
+polls_nld <- read_excel("netherlands_monthly.xlsx", col_types = c(rep("guess", 5), rep("numeric", 29), rep("guess", 3))) |>
+  dplyr::select(survey_date, year, month, CD, CP, LPF, LN, PVV, FvD) |> 
+  mutate(month = sprintf("%02d" , month),
+         year_month = as.factor(paste(year, month, sep = "-")),
+         country = "NLD",
+         CD = case_when(
+           is.na(CD) ~ 0,
+           TRUE ~ CD
+         ),
+         CP = case_when(
+           is.na(CP) ~ 0,
+           TRUE ~ CP
+         ),
+         LPF = case_when(
+           is.na(LPF) ~ 0,
+           TRUE ~ LPF
+         ),
+         LN = case_when(
+           is.na(LN) ~ 0,
+           TRUE ~ LN
+         ),
+         PVV = case_when(
+           is.na(PVV) ~ 0,
+           TRUE ~ PVV
+         ),
+         FvD = case_when(
+           is.na(FvD) ~ 0,
+           TRUE ~ FvD
+         ),
+         rrp_sum = CD + CP + LPF + LN + PVV + FvD
+         ) |>
+  group_by(year_month) |>
+  mutate(
+    rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
+  ) |>
+  dplyr::select(country, year_month, rrp_voteshare) |>
+  distinct()
+
+polls_esp <- read_excel("spain_monthly.xlsx", col_types = c(rep("guess", 38), "numeric", rep("guess", 8))) |>
+  dplyr::select(survey_date, year, month, VOX) |> 
+  mutate(month = sprintf("%02d" , month),
+    year_month = as.factor(paste(year, month, sep = "-")),
+         country = "ESP",
+         VOX = case_when(
+           is.na(VOX) ~ 0,
+           TRUE ~ VOX
+         )) |>
+  group_by(year_month) |>
+  mutate(
+    rrp_voteshare = mean(VOX, na.rm = TRUE)
+  ) |>
+  dplyr::select(country, year_month, rrp_voteshare) |>
+  distinct()
+
+
+polls <- bind_rows(polls_aus, polls_swe, polls_dnk, polls_deu, polls_nld, polls_esp) |>
+              rename(rrp_polled_voteshare = rrp_voteshare) |>
+  right_join(data_monthly |>
+          dplyr::select(country, year_month) |>
+          distinct(),
+        by = c("country", "year_month")) |>
+  group_by(country) |>
+  mutate(
+    lag_rrp_polled_voteshare = lag(rrp_polled_voteshare, order_by = year_month)
+  ) |>
+  ungroup()
+
+
+
+```
+
+# Bringing it all together
+
+```{r}
+
+reg_data <- data_monthly |>
+  filter(parlgov_id %in% c(1013, 973, ## OVP and SPO
+                           558, 1727, ## SPD and CDU
+                           1629, 1605, ## Danish SDs and Venstre
+                           902, 645, ## PSOE and PP
+                           1556, 773, ## Labour and Conservatives
+                           1409, 742, 235, ## VVD, PvdA, and CDA
+                           657, 904 ## SAP and Moderates
+                           )) |>
+  dplyr::select(country, parlgov_id, name_short, name, name_english, 
+                year_month, prop_eu_mention, prop_euroscepticism, 
+                time_from_last, time_to_next, time_to_next_ep, vote_share, 
+                rrp_voteshare, change_voteshare, cabinet_party) |>
+  distinct() |>
+  group_by(country, name_short) |>
+  mutate(
+    lag__prop_eu_mention = lag(prop_eu_mention, order_by = year_month),
+    change_eu_mention = prop_eu_mention - lag__prop_eu_mention,
+    
+    lag_prop_euroscepticism = lag(prop_euroscepticism, order_by = year_month),
+    change_euroscepticism = prop_euroscepticism - lag_prop_euroscepticism
+  ) |>
+  ungroup() |>
+  left_join(read_csv("view_party.csv") |>
+              filter(country_name_short %in% c("AUT", "DEU", "DNK", "ESP", "GBR", "NLD", "SWE")) |>
+              mutate(
+                country = case_when(
+                  country_name_short == "AUT" ~ "AUS",
+                  is.na(country_name_short) ~ NA,
+                  .default = country_name_short)
+                ) |>
+              rename(parlgov_id = party_id) |>
+              dplyr::select(c(country, family_name, parlgov_id))
+            ) |>
+  mutate(
+    family_name = case_when(
+      family_name %in% c("Conservative", "Christian democracy") ~ "Con/CD",
+      family_name == "Liberal" ~ "Lib",
+      family_name == "Social democracy" ~ "SocDem",
+      .default = NA
+    ) |> as.factor(),
+    family_2 = case_when(
+      family_name %in% c("Con/CD", "Lib") ~ "Centre-right",
+      family_name %in% c("SocDem") ~ "Centre-left",
+      .default = NA
+    ) |> as.factor()
+  ) |>
+  left_join(polls, 
+            by = c("country", "year_month")) |>
+  mutate(parlgov_id = as.factor(parlgov_id))
+
+#write.csv(reg_data, "reg_data.csv", row.names = FALSE)
+
+```
+
+The variables are in the `reg_data` dataframe.
+
+The dependent variables are the share of sentences about the EU and the share of Eurosceptic sentences (out of all sentences about the EU).
+
+The controls are RRP voteshare, RRP vote intention according to opinion polls (per month) own party vote loss, time to the next parliamentary election, time to the next European election, party size (in terms of vote share), current government participation, a proxy for public support for the EU in the country, a recession dummy variable, and coalition inclusion probabilities. 
+
+| Variable                                  | Variable name              |
+|-------------------------------------------|----------------------------|
+| RRP vote share in the last election       | `rrp_voteshare`            |
+| Polled RRP vote share in the last month   | `lag_rrp_polled_voteshare` |
+| Own party vote share in the last election | `vote_share`               |
+| Change in own party vote share            | `change_voteshare`         |
+| Time to the next parliamentary election   | `time_to_next`             |
+| Time to the next European election        | `time_to_next_ep`          |
+| Current government participation          | `cabinet_party`            |
+| Party family (Cons/CD, Lib, or SocDem)    | `family_name`              |
+| Party family (Centre-Right or Centre-Left)| `family_2`                 |
+
+: Variable names in the dataset
+
+
+
