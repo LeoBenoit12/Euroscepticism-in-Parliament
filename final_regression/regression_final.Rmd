@@ -24,157 +24,134 @@ theme_set(theme_bw() +
 ### Plotting the frequency of speeches by party and country:
 
 ```{r, fig.width=12, fig.height=10}
-
 data_monthly <- read_csv("data_monthly.csv") |>
   mutate(year_month = factor(year_month))
 
 data_yearly <- read_csv("data_yearly.csv")
+```
 
+
+```{r, fig.width=12, fig.height=10}
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "AUS") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_eu_mention)) +
-  #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   ylim(0, 15) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
        title = "Share of sentences about the EU in Austria by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "DEU") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_eu_mention)) +
-  #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   ylim(0, 15) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
        title = "Share of sentences about the EU in Germany by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
-data_monthly |>
+data_monthly |> 
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "DNK") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_eu_mention)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   ylim(0, 15) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
        title = "Share of sentences about the EU in Denmark by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "ESP") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_eu_mention)) +
-  #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   ylim(0, 15) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
        title = "Share of sentences about the EU in Spain by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "NLD") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_eu_mention)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   ylim(0, 15) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
        title = "Share of sentences about the EU in the Netherlands by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
-
+  
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "SWE") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_eu_mention)) +
-  #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month),
+             linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   ylim(0, 15) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
        title = "Share of sentences about the EU in Sweden by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "GBR") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_eu_mention)) +
-  #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
-  facet_wrap(~name_short) +
-  #ylim(0, 15) +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
+  facet_wrap(~name_short, scales = "free_y") +
+  #ylim(0, 50) +
   labs(x = "Year",
        y = "Share of sentences about the EU",
        title = "Share of sentences about the EU in the UK by party") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 ```
@@ -203,150 +180,128 @@ data_monthly |>
 ```{r, fig.width=12, fig.height=10}
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "AUS") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_euroscepticism)) +
-  #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
-  #ylim(0, 15) +
+  #ylim(0, 60) +
   labs(x = "Year",
         y = "Share of Eurosceptic sentences",
        title = "Eurosceptic sentences in Austria as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "DEU") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_euroscepticism)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   #ylim(0, 15) +
   labs(x = "Year",
         y = "Share of Eurosceptic sentences",
        title = "Eurosceptic sentences in Germany as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "DNK") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_euroscepticism)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   #ylim(0, 15) +
   labs(x = "Year",
         y = "Share of Eurosceptic sentences",
        title = "Eurosceptic sentences in Denmark as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
-data_monthly |>
+data_monthly |> 
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "ESP") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_euroscepticism)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   #ylim(0, 15) +
   labs(x = "Year",
         y = "Share of Eurosceptic sentences",
        title = "Eurosceptic sentences in Spain as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "NLD") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_euroscepticism)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   #ylim(0, 15) +
   labs(x = "Year",
         y = "Share of Eurosceptic sentences",
        title = "Eurosceptic sentences in the Netherlands as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "SWE") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_euroscepticism)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
   #ylim(0, 15) +
   labs(x = "Year",
         y = "Share of Eurosceptic sentences",
        title = "Eurosceptic sentences in Sweden as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 data_monthly |>
+  mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
+         year_month = as.Date(paste(year_month, "-01", sep = ""))
+         ) |>
   filter(country == "GBR") |>
-  mutate(election_year_month = case_when(
-    time_to_next == 0 ~ 1,
-    .default = 0)) |>
   ggplot(aes(x = year_month, y = prop_euroscepticism)) +
   #geom_path(group=1, alpha = 0.4) +
   geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(aes(x = as.numeric(year_month)),
-              alpha = 0.2, colour = "blue", fill = "blue",
+  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
               span = 0.5) +
-  geom_vline(aes(xintercept = ifelse(election_year_month == 1, year_month, NA)), linetype = "dashed", color = "black") +
+  geom_vline(aes(xintercept = next_election_year_month), linetype = "dashed", color = "black") +
   facet_wrap(~name_short) +
-  ylim(0, 75) +
+  ylim(0, 100) +
   labs(x = "Year",
         y = "Share of Eurosceptic sentences",
        title = "Eurosceptic sentences in the UK as share of all sentences about the EU") +
-  scale_x_discrete(breaks = c("1999-01", "2004-01", "2009-01", "2014-01", "2019-01"),
-                   labels = c("1999", "2004", "2009", "2014", "2019")) +
   theme(panel.spacing.x = unit(5, "mm"))
 
 ```
@@ -377,14 +332,14 @@ data_monthly |>
 ```{r, fig.height=10, fig.width=12}
 
 data_monthly |>
-  ggplot(aes(x = prop_eu_mention, y = prop_euroscepticism, 
-             colour = country, fill = country)) +
+  ggplot(aes(x = prop_eu_mention, y = prop_euroscepticism)) +
   geom_point(alpha = 0.1) +
-  #geom_smooth(method = "lm", alpha = 0.2) +
+  geom_smooth(colour = "blue", fill = "blue", alpha = 0.2) +
   facet_wrap(~ country, scales = "free") +
   labs(x = "Share of sentences about the EU",
        y = "Share of Eurosceptic sentences",
-       title = "Overall share of Eurosceptic sentences against monthly share of sentences about the EU")
+       title = "Overall share of Eurosceptic sentences against monthly share of sentences about the EU") +
+  theme(panel.spacing.x = unit(5, "mm"))
 
 ```
 
@@ -398,7 +353,8 @@ data_monthly |>
 ```{r}
 
 reg_data <- read_csv("reg_data.csv") |>
-  mutate(year_month = factor(year_month))
+  mutate(year_month = factor(year_month),
+         parlgov_id = factor(parlgov_id))
 
 m1 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
@@ -439,16 +395,24 @@ m6 <- lm(data = reg_data,
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party + parlgov_id +
-               change_voteshare*rrp_voteshare + parlgov_id)
+               change_voteshare*rrp_voteshare)
 
-stargazer::stargazer(m1, m2, m3, m4, m5, m6,
+m7 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id)
+
+stargazer::stargazer(m1, m2, m7, m3, m4, m5, m6,
                      omit.labels = c("Party", "Country"),
                      type = "text", title = "Table 1: Regression Using RRP Vote Share",
                      #out = "table.html",
                      dep.var.labels = "Share of Eurosceptic sentences",
-                      covariate.labels = c("Time", "Lagged Euroscepticism", 
+                      covariate.labels = c("Time", "Lagged Euroscepticism",
                                           "Time to next election (months)",
                                           "Time to next EP election (months)",
+                                          "Log time to next election (months)",
+                                          "Log time to next EP election (months)",
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "RRP vote share",
@@ -693,6 +657,41 @@ stargazer::stargazer(m_aus3, m_deu3, m_den3, m_swe3, m_esp3, m_nld3, m_uk3,
 
 ```
 
+
+```{r}
+
+
+
+bind_rows(
+  plot_predictions(m_aus1, condition = "rrp_voteshare", draw = FALSE) |>
+    mutate(country = "Austria"),
+  plot_predictions(m_deu1, condition = "rrp_voteshare", draw = FALSE) |>
+    mutate(country = "Germany"),
+  plot_predictions(m_swe1, condition = "rrp_voteshare", draw = FALSE) |>
+    mutate(country = "Sweden"),
+  plot_predictions(m_den1, condition = "rrp_voteshare", draw = FALSE) |>
+    mutate(country = "Denmark"),
+  plot_predictions(m_nld1, condition = "rrp_voteshare", draw = FALSE) |>
+    mutate(country = "Netherlands"),
+  plot_predictions(m_uk1, condition = "rrp_voteshare", draw = FALSE) |>
+    mutate(country = "UK")
+) |>
+  ggplot(
+    aes(
+      x = rrp_voteshare,
+      y = estimate,
+      ymin = conf.low,
+      ymax = conf.high,
+      colour = country,
+      fill = country
+    )
+  ) +
+  geom_ribbon(alpha = 0.2, colour = NA) +
+  geom_line()
+
+```
+
+
 ## Using Polled RRP Vote Intention
 
 ### Pooled
@@ -714,39 +713,48 @@ mp2 <- lm(data = reg_data,
 
 mp3 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country + 
+               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               parlgov_id)
+
+mp4 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
                time_to_next*lag_rrp_polled_voteshare + parlgov_id)
 
-mp4 <- lm(data = reg_data,
+mp5 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_name +
                family_name*lag_rrp_polled_voteshare)
 
-mp5 <- lm(data = reg_data,
+mp6 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_2 +
                family_2*lag_rrp_polled_voteshare )
 
-mp6 <- lm(data = reg_data,
+mp7 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party + parlgov_id +
                change_voteshare*lag_rrp_polled_voteshare + parlgov_id)
 
-stargazer::stargazer(mp1, mp2, mp3, mp4, mp5, mp6,
+stargazer::stargazer(mp1, mp2, mp3, mp4, mp5, mp6, mp7,
                      omit.labels = c("Party", "Country"),
                      type = "text", title = "Table 5: Regression Using Polled RRP Vote",
                      dep.var.labels = "Share of Eurosceptic sentences",
-                    covariate.labels = c("Time", "Lagged Euroscepticism", 
+                    covariate.labels = c("Time", "Lagged Euroscepticism",
                                           "Time to next election (months)",
                                           "Time to next EP election (months)",
+                                          "Log time to next election (months)",
+                                          "Log time to next EP election (months)",
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "Polled RRP Vote",
@@ -768,7 +776,7 @@ stargazer::stargazer(mp1, mp2, mp3, mp4, mp5, mp6,
 
 ```{r}
 
-plot_slopes(mp4, variables = "lag_rrp_polled_voteshare", 
+plot_slopes(mp5, variables = "lag_rrp_polled_voteshare", 
             by = "family_name") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   labs(title = "Effect of Polled RRP Vote Share on Euroscepticism by Party Family",
@@ -960,6 +968,48 @@ stargazer::stargazer(mp_aus3, mp_deu3, mp_den3, mp_swe3, mp_esp3, mp_nld3,
                      omit.stat = c("f", "ser"))
 
 ```
+
+```{r}
+
+
+
+bind_rows(
+  plot_predictions(mp_aus1, condition = "lag_rrp_polled_voteshare", draw = FALSE) |>
+    mutate(country = "Austria"),
+  plot_predictions(mp_deu1, condition = "lag_rrp_polled_voteshare", draw = FALSE) |>
+    mutate(country = "Germany"),
+  plot_predictions(mp_swe1, condition = "lag_rrp_polled_voteshare", draw = FALSE) |>
+    mutate(country = "Sweden"),
+  plot_predictions(mp_den1, condition = "lag_rrp_polled_voteshare", draw = FALSE) |>
+    mutate(country = "Denmark"),
+  plot_predictions(mp_nld1, condition = "lag_rrp_polled_voteshare", draw = FALSE) |>
+    mutate(country = "Netherlands"),
+  plot_predictions(mp_esp1, condition = "lag_rrp_polled_voteshare", draw = FALSE) |>
+    mutate(country = "Spain")
+) |>
+  ggplot(
+    aes(
+      x = lag_rrp_polled_voteshare,
+      y = estimate,
+      ymin = conf.low,
+      ymax = conf.high,
+      colour = country,
+      fill = country
+    )
+  ) +
+  geom_ribbon(alpha = 0.2, colour = NA) +
+  geom_line()
+
+
+plot_slopes(mp_nld2, variables = "lag_rrp_polled_voteshare", 
+            by = "family_name") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  labs(title = "Effect of Polled RRP Vote Share on Euroscepticism by Party Family",
+            xlab = "Polled RRP Vote Share (%)",
+            ylab = "Euroscepticism (Share of Eurosceptic Sentences)")
+
+```
+
 
 # Election window regression
 
