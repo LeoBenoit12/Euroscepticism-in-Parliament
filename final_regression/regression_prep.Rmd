@@ -185,7 +185,8 @@ parlgov_elections <- read_csv("view_election.csv") |>
                           slice(rep(1, 15))
                         ) |>
               mutate(country = "DEU")
-            )
+            ) |>
+  mutate(election_year = format(election_date, "%Y"))
 
 
 ## Getting right-wing populist parties
@@ -235,7 +236,20 @@ parlgov_elections <- election_dates |>
         )
       ) |>
       group_by(country) |>
-  right_join(parlgov_elections)
+  right_join(parlgov_elections) 
+
+
+parlgov_elections <- parlgov_elections |>
+  left_join(parlgov_elections |> 
+              filter(election_type == "parliament") |> 
+              dplyr::select(country, election_year, rrp_voteshare) |> 
+              distinct() |> 
+              group_by(country) |> 
+              mutate(
+                rrp_lag = dplyr::lag(rrp_voteshare, order_by = election_year), 
+                rrp_lag2 = dplyr::lag(rrp_voteshare, order_by = election_year, 2)
+                )
+            )
 
 ## Getting cabinet composition data
 
@@ -358,7 +372,7 @@ vote_changes <- parlgov_elections |>  # Calculating change in voteshare
               filter(election_type == "parliament") |>
               dplyr::select(country, election_date, 
                             party_name_short, vote_share, 
-                            party_id, rrp_voteshare) |>
+                            party_id, rrp_voteshare, rrp_lag, rrp_lag2) |>
               group_by(party_id) |>
               mutate(
                 change_voteshare = vote_share - lag(vote_share, order_by = election_date)
@@ -797,14 +811,14 @@ reg_data <- data_monthly |>
   dplyr::select(country, parlgov_id, name_short, name, name_english, 
                 year_month, prop_eu_mention, prop_euroscepticism, 
                 time_from_last, time_to_next, time_to_next_ep, vote_share, 
-                rrp_voteshare, change_voteshare, cabinet_party) |>
+                rrp_voteshare, rrp_lag, rrp_lag2, change_voteshare, cabinet_party) |>
   distinct() |>
   group_by(country, name_short) |>
   mutate(
-    lag__prop_eu_mention = lag(prop_eu_mention, order_by = year_month),
+    lag__prop_eu_mention = dplyr::lag(prop_eu_mention, order_by = year_month),
     change_eu_mention = prop_eu_mention - lag__prop_eu_mention,
     
-    lag_prop_euroscepticism = lag(prop_euroscepticism, order_by = year_month),
+    lag_prop_euroscepticism = dplyr::lag(prop_euroscepticism, order_by = year_month),
     change_euroscepticism = prop_euroscepticism - lag_prop_euroscepticism
   ) |>
   ungroup() |>
@@ -836,7 +850,7 @@ reg_data <- data_monthly |>
             by = c("country", "year_month")) |>
   mutate(parlgov_id = as.factor(parlgov_id))
 
-#write.csv(reg_data, "reg_data.csv", row.names = FALSE)
+write.csv(reg_data, "reg_data.csv", row.names = FALSE)
 
 ```
 

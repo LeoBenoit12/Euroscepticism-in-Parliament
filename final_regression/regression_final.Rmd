@@ -24,14 +24,17 @@ theme_set(theme_bw() +
 ### Plotting the frequency of speeches by party and country:
 
 ```{r, fig.width=12, fig.height=10}
+
 data_monthly <- read_csv("data_monthly.csv") |>
   mutate(year_month = factor(year_month))
 
 data_yearly <- read_csv("data_yearly.csv")
+
 ```
 
 
 ```{r, fig.width=12, fig.height=10}
+
 data_monthly |>
   mutate(next_election_year_month = as.Date(paste(next_election_year_month, "-01", sep = "")),
          year_month = as.Date(paste(year_month, "-01", sep = ""))
@@ -344,6 +347,54 @@ data_monthly |>
 ```
 
 
+
+# Validating Against CHES
+
+```{r}
+
+## Getting ches and partyfacts codes:
+
+partyfacts_to_ches <- read_csv("partyfacts-external-parties.csv") |> 
+  filter((partyfacts_id %in% unique(data_yearly$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
+           dataset_key == "ches" &
+           year_last >= 1998) |>
+  rename(ches_id = dataset_party_id,
+         pf_country = country) |>
+  mutate(ches_id = as.numeric(ches_id))
+  
+ches <- haven::read_dta("1999-2019_CHES_dataset_means(v3).dta") |>
+  rename(ches_id = party_id,
+         ches_country = country) |>
+  dplyr::select(ches_country, ches_id, year, party, eu_position, eu_salience, eu_blur)
+
+joint_ches <- data_yearly |>
+  left_join(partyfacts_to_ches, by = "partyfacts_id") |>
+  left_join(ches, by = c("ches_id", "year")) |>
+  mutate(
+    standard_eu_mention = (prop_eu_mention - mean(prop_eu_mention, na.rm = TRUE))/sd(prop_eu_mention, na.rm = TRUE),
+    standard_eu_stance = (prop_euroscepticism - mean(prop_euroscepticism, na.rm = TRUE))/sd(prop_euroscepticism, na.rm = TRUE),
+    standard_eu_salience = (eu_salience - mean(eu_salience, na.rm = TRUE))/sd(eu_salience, na.rm = TRUE),
+    standard_eu_position = (eu_position - mean(eu_position, na.rm = TRUE))/sd(eu_position, na.rm = TRUE)
+  )
+
+
+joint_ches |>
+  ggplot(aes(x = eu_position, y = prop_euroscepticism)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", colour = "blue", fill = "blue", alpha = 0.2) +
+  ggrepel::geom_text_repel(aes(label = ifelse(abs(prop_euroscepticism-(37 - 4*eu_position))>15,
+                                               paste(party, year, sep = ", "),
+                                               NA)),
+                            size = 3, max.overlaps = 15) +
+  ggpubr::stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~~")),
+                                label.x = 1.1, label.y = 5) +
+  labs(x = "CHES Position",
+       y = "Share of Eurosceptic sentences",
+       title = "CHES Position against Share of Eurosceptic Sentences")
+
+```
+
+
 # Regressions
 
 ## Using RRP voteshare in the last election
@@ -353,8 +404,13 @@ data_monthly |>
 ```{r}
 
 reg_data <- read_csv("reg_data.csv") |>
-  mutate(year_month = factor(year_month),
-         parlgov_id = factor(parlgov_id))
+  mutate(year = year_month |>
+           paste("01", sep = "-") |>
+           as.Date() |>
+           format("%Y"),
+         year_month = factor(year_month),
+         parlgov_id = factor(parlgov_id)
+         )
 
 m1 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
@@ -403,7 +459,7 @@ m7 <- lm(data = reg_data,
                log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party + parlgov_id)
 
-stargazer::stargazer(m1, m2, m7, m3, m4, m5, m6,
+stargazer::stargazer(m1, m2, m3, m5, m6, 
                      omit.labels = c("Party", "Country"),
                      type = "text", title = "Table 1: Regression Using RRP Vote Share",
                      #out = "table.html",
@@ -411,42 +467,17 @@ stargazer::stargazer(m1, m2, m7, m3, m4, m5, m6,
                       covariate.labels = c("Time", "Lagged Euroscepticism",
                                           "Time to next election (months)",
                                           "Time to next EP election (months)",
-                                          "Log time to next election (months)",
-                                          "Log time to next EP election (months)",
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "RRP vote share",
                                            "Party in Government",
-                                           "Liberal Party",
-                                          "Social Democratic Party",
                                           "Centre-Right Party",
                                           "Time to next election * RRP vote share",
-                                          "RRP vote share * Liberal",
-                                          "RRP vote share * Social Democrat",
                                           "RRP vote share * Centre-Right",
                                           "RRP vote share * Change in vote share"
                                            ),
                      omit = c("parlgov_id", "country"),
                      omit.stat = c("f", "ser"))
-
-# modelsummary(list(m1, m2, m3, m4, m5, m6),
-#              output = "markdown",
-#              stars = TRUE,
-#              coef_omit = "parlgov_id|country",
-#              title = "Table 1: Regression Using RRP Vote Share",
-#              coef_rename = c("as.numeric(year_month)" = "Time", 
-#                              "lag_prop_euroscepticism" = "Lagged Euroscepticism", 
-#                             "time_to_next" = "Time to next election (months)",
-#                                         "time_to_next_ep" =  "Time to next EP election (months)",
-#                                          "vote_share" = "Party size (vote share)",
-#                                           "change_voteshare" = "Change in vote share",
-#                                           "rrp_voteshare" = "RRP vote share",
-#                                           "cabinet_party" = "Party in Government",
-#                                           "family_nameLib" = "Liberal Party",
-#                                         "family_nameSocDem" =  "Social Democratic Party",
-#                                         "family_2Centre-right" =  "Centre-Right Party")
-#              )
-
 
 ```
 
