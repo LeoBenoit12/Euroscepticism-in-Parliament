@@ -1,7 +1,7 @@
 Regressions
 ================
 Duarte Amaro
-2025-06-17
+2025-06-18
 
 # Descriptive Statistics
 
@@ -630,11 +630,12 @@ reg_data <- read_csv("reg_data.csv") |>
          )
 ```
 
-    ## Rows: 3278 Columns: 25
+    ## Rows: 3278 Columns: 30
     ## ── Column specification ────────────────────────────────────────────────────────
     ## Delimiter: ","
-    ## chr  (7): country, name_short, name, name_english, year_month, family_name, ...
-    ## dbl (18): parlgov_id, prop_eu_mention, prop_euroscepticism, time_from_last, ...
+    ## chr   (7): country, name_short, name, name_english, year_month, family_name,...
+    ## dbl  (22): parlgov_id, prop_eu_mention, prop_euroscepticism, time_from_last,...
+    ## date  (1): date
     ## 
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
@@ -655,39 +656,46 @@ m2 <- lm(data = reg_data,
 
 m3 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
-               lag_prop_euroscepticism + country +
+               lag_prop_euroscepticism + country + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               time_to_next*rrp_voteshare + parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m4 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + family_name +
-               family_name*rrp_voteshare + parlgov_id)
+               change_voteshare + rrp_voteshare + cabinet_party +
+               time_to_next*rrp_voteshare + parlgov_id + eu_public_opinion)
 
 m5 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + family_2 +
-               family_2*rrp_voteshare + parlgov_id)
+               change_voteshare + rrp_voteshare + cabinet_party + family_name +
+               family_name*rrp_voteshare + parlgov_id + eu_public_opinion)
 
 m6 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id +
-               change_voteshare*rrp_voteshare)
+               change_voteshare + rrp_voteshare + cabinet_party + family_2 +
+               family_2*rrp_voteshare + parlgov_id + eu_public_opinion)
 
 m7 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
-               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id)
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id +
+               change_voteshare*rrp_voteshare + eu_public_opinion)
 
-stargazer::stargazer(m1, m2, m3, m5, m6, 
+m8 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id + eu_public_opinion)
+
+stargazer::stargazer(m1, m2, m3, m4, m6, m7, 
                      omit.labels = c("Party", "Country"),
                      type = "text", title = "Table 1: Regression Using RRP Vote Share",
                      #out = "table.html",
@@ -700,70 +708,75 @@ stargazer::stargazer(m1, m2, m3, m5, m6,
                                            "RRP vote share",
                                            "Party in Government",
                                           "Centre-Right Party",
+                                          "Pro EU Public Opinion",
                                           "Time to next election * RRP vote share",
                                           "RRP vote share * Centre-Right",
                                           "RRP vote share * Change in vote share"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
     ## 
     ## Table 1: Regression Using RRP Vote Share
-    ## ========================================================================================
-    ##                                                       Dependent variable:               
-    ##                                        -------------------------------------------------
-    ##                                                 Share of Eurosceptic sentences          
-    ##                                           (1)       (2)       (3)       (4)       (5)   
-    ## ----------------------------------------------------------------------------------------
-    ## Time                                   0.008***  0.007***  0.007***  0.007***  0.007*** 
-    ##                                         (0.002)   (0.002)   (0.002)   (0.002)   (0.002) 
-    ##                                                                                         
-    ## Lagged Euroscepticism                  0.109***  0.087***  0.087***  0.087***  0.087*** 
-    ##                                         (0.018)   (0.018)   (0.018)   (0.018)   (0.018) 
-    ##                                                                                         
-    ## Time to next election (months)          -0.002    -0.003    -0.009    -0.003    -0.003  
-    ##                                         (0.009)   (0.009)   (0.013)   (0.009)   (0.009) 
-    ##                                                                                         
-    ## Time to next EP election (months)       -0.008    -0.008    -0.009    -0.008    -0.008  
-    ##                                         (0.007)   (0.007)   (0.007)   (0.007)   (0.007) 
-    ##                                                                                         
-    ## Party size (vote share)                -0.111*** -0.143*** -0.143*** -0.140*** -0.143***
-    ##                                         (0.029)   (0.036)   (0.036)   (0.037)   (0.036) 
-    ##                                                                                         
-    ## Change in vote share                    0.065**   0.063**   0.064**   0.061**   0.071** 
-    ##                                         (0.026)   (0.028)   (0.028)   (0.028)   (0.036) 
-    ##                                                                                         
-    ## RRP vote share                           0.021     0.010    -0.004     0.024     0.005  
-    ##                                         (0.036)   (0.036)   (0.042)   (0.048)   (0.039) 
-    ##                                                                                         
-    ## Party in Government                    -3.214*** -3.041*** -3.050*** -3.032*** -3.063***
-    ##                                         (0.301)   (0.317)   (0.317)   (0.317)   (0.323) 
-    ##                                                                                         
-    ## Centre-Right Party                                                     0.755            
-    ##                                                                       (1.060)           
-    ##                                                                                         
-    ## Time to next election * RRP vote share                       0.001                      
-    ##                                                             (0.001)                     
-    ##                                                                                         
-    ## RRP vote share * Centre-Right                                         -0.026            
-    ##                                                                       (0.057)           
-    ##                                                                                         
-    ## RRP vote share * Change in vote share                                           -0.001  
-    ##                                                                                 (0.003) 
-    ##                                                                                         
-    ## Constant                               15.886*** 16.546*** 16.673*** 15.934*** 16.599***
-    ##                                         (1.352)   (1.529)   (1.542)   (1.807)   (1.537) 
-    ##                                                                                         
-    ## ----------------------------------------------------------------------------------------
-    ## Party                                     No        No        No        No        No    
-    ## Country                                   Yes       Yes       Yes       Yes       Yes   
-    ## ----------------------------------------------------------------------------------------
-    ## Observations                             3,153     3,153     3,153     3,153     3,153  
-    ## R2                                       0.405     0.416     0.416     0.416     0.416  
-    ## Adjusted R2                              0.402     0.412     0.412     0.412     0.412  
-    ## ========================================================================================
-    ## Note:                                                        *p<0.1; **p<0.05; ***p<0.01
+    ## ==================================================================================================
+    ##                                                            Dependent variable:                    
+    ##                                        -----------------------------------------------------------
+    ##                                                      Share of Eurosceptic sentences               
+    ##                                           (1)       (2)       (3)       (4)       (5)       (6)   
+    ## --------------------------------------------------------------------------------------------------
+    ## Time                                    0.008**   0.007**  0.010***  0.009***  0.010***  0.010*** 
+    ##                                         (0.002)   (0.002)   (0.003)   (0.003)   (0.003)   (0.003) 
+    ##                                                                                                   
+    ## Lagged Euroscepticism                  0.109***  0.087***  0.086***  0.086***  0.086***  0.086*** 
+    ##                                         (0.018)   (0.018)   (0.018)   (0.018)   (0.018)   (0.018) 
+    ##                                                                                                   
+    ## Time to next election (months)          -0.002    -0.003    -0.004    -0.010    -0.004    -0.004  
+    ##                                         (0.009)   (0.009)   (0.009)   (0.013)   (0.009)   (0.009) 
+    ##                                                                                                   
+    ## Time to next EP election (months)       -0.008    -0.008    -0.012    -0.012    -0.012    -0.012  
+    ##                                         (0.007)   (0.007)   (0.007)   (0.007)   (0.007)   (0.007) 
+    ##                                                                                                   
+    ## Party size (vote share)                -0.111*** -0.143*** -0.139*** -0.139*** -0.136*** -0.138***
+    ##                                         (0.029)   (0.036)   (0.036)   (0.036)   (0.037)   (0.037) 
+    ##                                                                                                   
+    ## Change in vote share                    0.065*    0.063*    0.072*    0.073**   0.070*    0.088*  
+    ##                                         (0.026)   (0.028)   (0.028)   (0.028)   (0.029)   (0.037) 
+    ##                                                                                                   
+    ## RRP vote share                           0.021     0.010     0.032     0.017     0.048     0.023  
+    ##                                         (0.036)   (0.036)   (0.038)   (0.043)   (0.049)   (0.040) 
+    ##                                                                                                   
+    ## Party in Government                    -3.214*** -3.041*** -3.066*** -3.077*** -3.056*** -3.110***
+    ##                                         (0.301)   (0.317)   (0.318)   (0.318)   (0.318)   (0.325) 
+    ##                                                                                                   
+    ## Centre-Right Party                                                               0.732            
+    ##                                                                                 (1.064)           
+    ##                                                                                                   
+    ## Pro EU Public Opinion                                      -5.128**  -5.165**  -5.151**  -5.255** 
+    ##                                                             (1.913)   (1.914)   (1.914)   (1.923) 
+    ##                                                                                                   
+    ## Time to next election * RRP vote share                                 0.001                      
+    ##                                                                       (0.001)                     
+    ##                                                                                                   
+    ## RRP vote share * Centre-Right                                                   -0.029            
+    ##                                                                                 (0.057)           
+    ##                                                                                                   
+    ## RRP vote share * Change in vote share                                                     -0.002  
+    ##                                                                                           (0.003) 
+    ##                                                                                                   
+    ## Constant                               15.886*** 16.546*** 18.465*** 18.611*** 17.901*** 18.613***
+    ##                                         (1.352)   (1.529)   (1.687)   (1.701)   (1.935)   (1.702) 
+    ##                                                                                                   
+    ## --------------------------------------------------------------------------------------------------
+    ## Party                                     No        No        No        No        No        No    
+    ## Country                                   Yes       Yes       Yes       Yes       Yes       Yes   
+    ## --------------------------------------------------------------------------------------------------
+    ## Observations                             3,153     3,153     3,140     3,140     3,140     3,140  
+    ## R2                                       0.405     0.416     0.417     0.417     0.417     0.417  
+    ## Adjusted R2                              0.402     0.412     0.413     0.413     0.413     0.413  
+    ## ==================================================================================================
+    ## Note:                                                                *p<0.05; **p<0.01; ***p<0.001
 
 ### Per country
 
@@ -773,48 +786,48 @@ m_aus1 <- lm(data = reg_data |> filter(country == "AUS"),
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_aus2 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion +  time_to_next*rrp_voteshare)
 
 m_aus3 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_deu1 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_deu2 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_deu3 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_den1 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party +
+               change_voteshare + eu_public_opinion + rrp_voteshare + cabinet_party +
                parlgov_id)
 
 m_den2 <- lm(data = reg_data |> filter(country == "DNK"),
@@ -822,101 +835,101 @@ m_den2 <- lm(data = reg_data |> filter(country == "DNK"),
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_den3 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_swe1 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_swe2 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_swe3 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_esp1 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_esp2 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_esp3 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_nld1 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_nld2 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_nld3 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_uk1 <- lm(data = reg_data |> filter(country == "GBR"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_uk2 <- lm(data = reg_data |> filter(country == "GBR"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_uk3 <- lm(data = reg_data |> filter(country == "GBR"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 stargazer::stargazer(m_aus1, m_deu1,m_den1, m_swe1, m_esp1, m_nld1, m_uk1,
-                     omit.labels = c("Party", "Country"),
+                     omit.labels = c("Party"),
                      type = "text", title = "Table 2: Regression Using RRP Vote Share Per Country",
                      #out = "table.html",
                      dep.var.labels = "Share of Eurosceptic sentences",
@@ -927,10 +940,12 @@ stargazer::stargazer(m_aus1, m_deu1,m_den1, m_swe1, m_esp1, m_nld1, m_uk1,
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "RRP vote share",
-                                           "Party in Government"
+                                           "Party in Government",
+                                          "Pro EU Public Opinion"
                                            ),
-                     omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit = c("parlgov_id"),
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
     ## 
@@ -942,46 +957,48 @@ stargazer::stargazer(m_aus1, m_deu1,m_den1, m_swe1, m_esp1, m_nld1, m_uk1,
     ##                                      AUS       DEU       DNK       SWE       ESP       NLD       GBR   
     ##                                      (1)       (2)       (3)       (4)       (5)       (6)       (7)   
     ## -------------------------------------------------------------------------------------------------------
-    ## Time                                0.002    0.011*     0.003    -0.007   0.016***   0.014**   -0.0004 
-    ##                                    (0.008)   (0.006)   (0.016)   (0.010)   (0.005)   (0.006)   (0.006) 
+    ## Time                                0.006     0.012     0.030    -0.004    0.013*     0.014     0.001  
+    ##                                    (0.008)   (0.007)   (0.019)   (0.013)   (0.005)   (0.007)   (0.006) 
     ##                                                                                                        
-    ## Lagged Euroscepticism              -0.001   0.231***    0.078    -0.097*    0.058     0.056     0.044  
-    ##                                    (0.048)   (0.047)   (0.053)   (0.049)   (0.050)   (0.039)   (0.049) 
+    ## Lagged Euroscepticism              -0.008   0.223***    0.071    -0.097     0.032     0.060     0.044  
+    ##                                    (0.049)   (0.047)   (0.053)   (0.050)   (0.050)   (0.039)   (0.049) 
     ##                                                                                                        
-    ## Time to next election (months)     -0.019   -0.053***   0.028    0.038**   -0.0002   -0.011     0.010  
-    ##                                    (0.025)   (0.018)   (0.048)   (0.017)   (0.019)   (0.023)   (0.018) 
+    ## Time to next election (months)     -0.027   -0.057**    0.028    0.040*    -0.004    -0.010     0.010  
+    ##                                    (0.025)   (0.018)   (0.048)   (0.018)   (0.019)   (0.023)   (0.018) 
     ##                                                                                                        
-    ## Time to next EP election (months)  -0.011     0.013    -0.014   -0.028**   -0.006    -0.012    -0.008  
-    ##                                    (0.021)   (0.013)   (0.033)   (0.012)   (0.014)   (0.018)   (0.016) 
+    ## Time to next EP election (months)  -0.018     0.018    -0.052   -0.031**   -0.011    -0.016    -0.007  
+    ##                                    (0.022)   (0.013)   (0.036)   (0.012)   (0.014)   (0.019)   (0.017) 
     ##                                                                                                        
-    ## Party size (vote share)           -0.420**   -0.164*   -0.322   -0.206***   0.049     0.043     0.210  
-    ##                                    (0.163)   (0.084)   (0.248)   (0.065)   (0.065)   (0.081)   (0.168) 
+    ## Party size (vote share)           -0.449**   -0.162    -0.310   -0.202**    0.008     0.041     0.267  
+    ##                                    (0.165)   (0.084)   (0.248)   (0.065)   (0.066)   (0.081)   (0.203) 
     ##                                                                                                        
-    ## Change in vote share                0.088    0.137**    0.135    -0.085    -0.004    -0.059     0.084  
-    ##                                    (0.093)   (0.063)   (0.190)   (0.055)   (0.052)   (0.063)   (0.091) 
+    ## Change in vote share                0.116    0.128*     0.099    -0.083     0.069    -0.062     0.077  
+    ##                                    (0.095)   (0.064)   (0.189)   (0.057)   (0.056)   (0.064)   (0.096) 
     ##                                                                                                        
-    ## RRP vote share                     -0.131   0.319***   -0.106    -0.202               0.118    0.220*  
-    ##                                    (0.100)   (0.102)   (0.260)   (0.141)             (0.089)   (0.125) 
+    ## RRP vote share                     -0.112    0.284*     0.091    -0.195               0.109     0.241  
+    ##                                    (0.101)   (0.121)   (0.271)   (0.142)             (0.090)   (0.135) 
     ##                                                                                                        
-    ## Party in Government               -2.978**  -3.398*** -2.621**  -1.283**  -3.167*** -4.540*** -6.743***
-    ##                                    (1.209)   (0.762)   (1.265)   (0.644)   (0.776)   (0.822)   (1.145) 
+    ## Party in Government                -3.116*  -3.446***  -2.629*   -1.306*  -3.619*** -4.501*** -7.077***
+    ##                                    (1.220)   (0.763)   (1.261)   (0.657)   (0.779)   (0.825)   (1.332) 
     ##                                                                                                        
-    ## Constant                          32.297*** 16.010*** 27.011*** 15.161***   2.505   12.614*** 18.588***
-    ##                                    (7.450)   (3.318)   (8.001)   (1.831)   (2.838)   (2.159)   (5.845) 
+    ## Pro EU Public Opinion              -17.662    1.825   -37.770*   -2.743   -11.187**  -1.523    -3.340  
+    ##                                   (10.301)   (4.190)  (15.557)   (5.565)   (3.404)   (5.672)   (5.131) 
+    ##                                                                                                        
+    ## Constant                          42.121*** 14.901*** 47.637*** 16.305*** 12.585**  13.771**  18.004** 
+    ##                                    (9.392)   (3.875)  (11.936)   (2.841)   (4.156)   (4.369)   (6.010) 
     ##                                                                                                        
     ## -------------------------------------------------------------------------------------------------------
     ## Party                                Yes       Yes       Yes       Yes       Yes       Yes       Yes   
-    ## Country                              No        No        No        No        No        No        No    
     ## -------------------------------------------------------------------------------------------------------
-    ## Observations                         432       426       374       403       413       669       436   
-    ## R2                                  0.074     0.321     0.040     0.218     0.126     0.128     0.327  
-    ## Adjusted R2                         0.054     0.306     0.016     0.201     0.109     0.115     0.313  
+    ## Observations                         430       424       372       401       413       666       434   
+    ## R2                                  0.080     0.327     0.053     0.222     0.149     0.127     0.327  
+    ## Adjusted R2                         0.058     0.310     0.027     0.202     0.130     0.112     0.311  
     ## =======================================================================================================
-    ## Note:                                                                       *p<0.1; **p<0.05; ***p<0.01
+    ## Note:                                                                     *p<0.05; **p<0.01; ***p<0.001
 
 ``` r
 stargazer::stargazer(m_aus2, m_deu2,m_den2, m_swe2, m_esp2, m_nld2, m_uk2,
-                     omit.labels = c("Party", "Country"),
+                     omit.labels = c("Party"),
                      type = "text", title = "Table 3: Interaction between RRP Vote Share and Time to Next Election Per Country",
                      #out = "table.html",
                      dep.var.labels = "Share of Eurosceptic sentences",
@@ -993,10 +1010,12 @@ stargazer::stargazer(m_aus2, m_deu2,m_den2, m_swe2, m_esp2, m_nld2, m_uk2,
                                            "Change in vote share",
                                            "RRP vote share",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "Time to next election * RRP vote share"
                                            ),
-                     omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit = c("parlgov_id"),
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
     ## 
@@ -1008,49 +1027,51 @@ stargazer::stargazer(m_aus2, m_deu2,m_den2, m_swe2, m_esp2, m_nld2, m_uk2,
     ##                                           AUS       DEU       DNK       SWE       ESP       NLD       GBR   
     ##                                           (1)       (2)       (3)       (4)       (5)       (6)       (7)   
     ## ------------------------------------------------------------------------------------------------------------
-    ## Time                                     0.001    0.011*     0.005    -0.007   0.016***    0.004    -0.002  
-    ##                                         (0.008)   (0.006)   (0.016)   (0.010)   (0.005)   (0.007)   (0.006) 
+    ## Time                                     0.005     0.012     0.029    -0.004    0.013*     0.006    -0.0004 
+    ##                                         (0.008)   (0.007)   (0.019)   (0.013)   (0.005)   (0.008)   (0.006) 
     ##                                                                                                             
-    ## Lagged Euroscepticism                   -0.003   0.233***    0.072   -0.098**    0.058     0.058     0.041  
-    ##                                         (0.049)   (0.047)   (0.053)   (0.050)   (0.050)   (0.038)   (0.049) 
+    ## Lagged Euroscepticism                   -0.011   0.225***    0.068    -0.098*    0.032     0.060     0.042  
+    ##                                         (0.049)   (0.047)   (0.053)   (0.050)   (0.050)   (0.039)   (0.049) 
     ##                                                                                                             
-    ## Time to next election (months)          -0.075    -0.042    -0.217    0.046*    -0.0002  -0.118**   -0.011  
-    ##                                         (0.096)   (0.026)   (0.187)   (0.025)   (0.019)   (0.051)   (0.033) 
+    ## Time to next election (months)          -0.093    -0.048    -0.140    0.049*    -0.004    -0.112*   -0.009  
+    ##                                         (0.097)   (0.027)   (0.191)   (0.025)   (0.019)   (0.052)   (0.041) 
     ##                                                                                                             
-    ## Time to next EP election (months)       -0.016     0.012    -0.032   -0.026**   -0.006    -0.014    -0.010  
-    ##                                         (0.022)   (0.013)   (0.035)   (0.013)   (0.014)   (0.018)   (0.017) 
+    ## Time to next EP election (months)       -0.024     0.017    -0.062    -0.029*   -0.011    -0.017    -0.008  
+    ##                                         (0.023)   (0.014)   (0.037)   (0.013)   (0.014)   (0.019)   (0.017) 
     ##                                                                                                             
-    ## Party size (vote share)                -0.437***  -0.159*   -0.311   -0.207***   0.049     0.051     0.236  
-    ##                                         (0.165)   (0.084)   (0.247)   (0.065)   (0.065)   (0.081)   (0.172) 
+    ## Party size (vote share)                -0.471**   -0.158    -0.301   -0.203**    0.008     0.049     0.240  
+    ##                                         (0.167)   (0.084)   (0.249)   (0.065)   (0.066)   (0.081)   (0.210) 
     ##                                                                                                             
-    ## Change in vote share                     0.106    0.129**    0.125    -0.084    -0.004    -0.057     0.077  
-    ##                                         (0.098)   (0.065)   (0.189)   (0.055)   (0.052)   (0.062)   (0.091) 
+    ## Change in vote share                     0.139     0.121     0.094    -0.083     0.069    -0.061     0.083  
+    ##                                         (0.100)   (0.065)   (0.189)   (0.057)   (0.056)   (0.064)   (0.096) 
     ##                                                                                                             
-    ## RRP vote share                          -0.182    0.421**   -0.555    -0.167              -0.021     0.155  
-    ##                                         (0.132)   (0.206)   (0.421)   (0.160)             (0.106)   (0.151) 
+    ## RRP vote share                          -0.172     0.370    -0.229    -0.155              -0.022     0.162  
+    ##                                         (0.132)   (0.212)   (0.444)   (0.163)             (0.108)   (0.207) 
     ##                                                                                                             
-    ## Party in Government                    -3.112**  -3.391*** -2.690**  -1.288**  -3.167*** -4.588*** -6.913***
-    ##                                         (1.230)   (0.763)   (1.265)   (0.645)   (0.776)   (0.820)   (1.167) 
+    ## Party in Government                    -3.270**  -3.443***  -2.671*   -1.305*  -3.619*** -4.554*** -6.927***
+    ##                                         (1.240)   (0.764)   (1.262)   (0.658)   (0.779)   (0.822)   (1.366) 
     ##                                                                                                             
-    ## Time to next election * RRP vote share   0.002    -0.003     0.018    -0.001              0.012**    0.006  
-    ##                                         (0.004)   (0.006)   (0.013)   (0.003)             (0.005)   (0.008) 
+    ## Pro EU Public Opinion                   -18.009    2.047   -35.080*   -2.385   -11.187**  -2.300    -1.077  
+    ##                                        (10.319)   (4.217)  (15.839)   (5.615)   (3.404)   (5.666)   (6.798) 
     ##                                                                                                             
-    ## Constant                               34.346*** 15.563*** 33.099*** 14.926***   2.505   14.913*** 18.304***
-    ##                                         (8.189)   (3.411)   (9.170)   (1.902)   (2.838)   (2.361)   (5.859) 
+    ## Time to next election * RRP vote share   0.003    -0.003     0.012    -0.002              0.012*     0.005  
+    ##                                         (0.004)   (0.006)   (0.013)   (0.003)             (0.005)   (0.011) 
+    ##                                                                                                             
+    ## Constant                               44.730*** 14.407*** 50.228*** 15.911*** 12.585**  16.427*** 18.354** 
+    ##                                        (10.104)   (4.004)  (12.273)   (2.950)   (4.156)   (4.522)   (6.055) 
     ##                                                                                                             
     ## ------------------------------------------------------------------------------------------------------------
     ## Party                                     Yes       Yes       Yes       Yes       Yes       Yes       Yes   
-    ## Country                                   No        No        No        No        No        No        No    
     ## ------------------------------------------------------------------------------------------------------------
-    ## Observations                              432       426       374       403       413       669       436   
-    ## R2                                       0.075     0.321     0.044     0.219     0.126     0.136     0.328  
-    ## Adjusted R2                              0.053     0.305     0.018     0.199     0.109     0.121     0.312  
+    ## Observations                              430       424       372       401       413       666       434   
+    ## R2                                       0.081     0.327     0.055     0.223     0.149     0.133     0.328  
+    ## Adjusted R2                              0.057     0.309     0.026     0.201     0.130     0.117     0.310  
     ## ============================================================================================================
-    ## Note:                                                                            *p<0.1; **p<0.05; ***p<0.01
+    ## Note:                                                                          *p<0.05; **p<0.01; ***p<0.001
 
 ``` r
 stargazer::stargazer(m_aus3, m_deu3, m_den3, m_swe3, m_esp3, m_nld3, m_uk3,
-                     omit.labels = c("Party", "Country"),
+                     omit.labels = c("Party"),
                      type = "text", title = "Table 4: Interaction between RRP Vote Share and Change in Vote Share Per Country",
                      #out = "table.html",
                      dep.var.labels = "Share of Eurosceptic sentences",
@@ -1062,10 +1083,12 @@ stargazer::stargazer(m_aus3, m_deu3, m_den3, m_swe3, m_esp3, m_nld3, m_uk3,
                                            "Change in vote share",
                                            "RRP vote share",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "RRP vote share * Change in vote share"
                                             ),
-                     omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit = c("parlgov_id"),
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
     ## 
@@ -1077,45 +1100,47 @@ stargazer::stargazer(m_aus3, m_deu3, m_den3, m_swe3, m_esp3, m_nld3, m_uk3,
     ##                                          AUS       DEU       DNK       SWE       ESP       NLD       GBR   
     ##                                          (1)       (2)       (3)       (4)       (5)       (6)       (7)   
     ## -----------------------------------------------------------------------------------------------------------
-    ## Time                                    0.002    0.012*    -0.001    -0.011   0.016***   0.014**   -0.0001 
-    ##                                        (0.008)   (0.007)   (0.017)   (0.011)   (0.005)   (0.007)   (0.006) 
+    ## Time                                    0.006     0.013     0.027    -0.008    0.013*     0.014     0.001  
+    ##                                        (0.008)   (0.007)   (0.019)   (0.014)   (0.005)   (0.007)   (0.006) 
     ##                                                                                                            
-    ## Lagged Euroscepticism                  -0.002   0.231***    0.077   -0.099**    0.058     0.056     0.043  
-    ##                                        (0.048)   (0.047)   (0.053)   (0.050)   (0.050)   (0.039)   (0.049) 
+    ## Lagged Euroscepticism                  -0.009   0.224***    0.070    -0.099*    0.032     0.060     0.043  
+    ##                                        (0.049)   (0.047)   (0.053)   (0.050)   (0.050)   (0.039)   (0.049) 
     ##                                                                                                            
-    ## Time to next election (months)         -0.022   -0.053***   0.027    0.034*    -0.0002   -0.011     0.011  
+    ## Time to next election (months)         -0.023   -0.057**    0.025    0.036*    -0.004    -0.010     0.011  
     ##                                        (0.027)   (0.018)   (0.048)   (0.018)   (0.019)   (0.023)   (0.019) 
     ##                                                                                                            
-    ## Time to next EP election (months)      -0.013     0.014    -0.014   -0.028**   -0.006    -0.013    -0.008  
-    ##                                        (0.022)   (0.013)   (0.033)   (0.012)   (0.014)   (0.018)   (0.016) 
+    ## Time to next EP election (months)      -0.017     0.019    -0.054   -0.032**   -0.011    -0.016    -0.007  
+    ##                                        (0.022)   (0.014)   (0.036)   (0.012)   (0.014)   (0.019)   (0.017) 
     ##                                                                                                            
-    ## Party size (vote share)               -0.443**   -0.162*   -0.408    -0.154*    0.049     0.043     0.194  
-    ##                                        (0.178)   (0.084)   (0.268)   (0.081)   (0.065)   (0.081)   (0.174) 
+    ## Party size (vote share)                -0.419*   -0.159    -0.443    -0.148     0.008     0.041     0.258  
+    ##                                        (0.180)   (0.084)   (0.270)   (0.082)   (0.066)   (0.082)   (0.205) 
     ##                                                                                                            
-    ## Change in vote share                    0.148     0.158    -0.450    -0.127*   -0.004    -0.043     0.072  
-    ##                                        (0.210)   (0.103)   (0.732)   (0.068)   (0.052)   (0.130)   (0.098) 
+    ## Change in vote share                    0.032     0.162    -0.793    -0.126     0.069    -0.044     0.061  
+    ##                                        (0.221)   (0.103)   (0.744)   (0.069)   (0.056)   (0.133)   (0.105) 
     ##                                                                                                            
-    ## RRP vote share                         -0.141    0.292**   -0.039    -0.068               0.116     0.202  
-    ##                                        (0.105)   (0.147)   (0.272)   (0.189)             (0.090)   (0.136) 
+    ## RRP vote share                         -0.096     0.239     0.213    -0.054               0.107     0.224  
+    ##                                        (0.108)   (0.162)   (0.288)   (0.191)             (0.091)   (0.143) 
     ##                                                                                                            
-    ## Party in Government                   -3.003**  -3.439***  -1.984   -2.028**  -3.167*** -4.551*** -6.711***
-    ##                                        (1.213)   (0.780)   (1.481)   (0.956)   (0.776)   (0.827)   (1.150) 
+    ## Party in Government                    -3.095*  -3.513***  -1.672    -2.091*  -3.619*** -4.513*** -7.086***
+    ##                                        (1.222)   (0.781)   (1.477)   (0.970)   (0.779)   (0.829)   (1.334) 
     ##                                                                                                            
-    ## RRP vote share * Change in vote share  -0.003    -0.005     0.042     0.019              -0.001     0.011  
-    ##                                        (0.010)   (0.018)   (0.051)   (0.018)             (0.010)   (0.034) 
+    ## Pro EU Public Opinion                  -19.581    1.832   -41.407**  -2.821   -11.187**  -1.441    -3.664  
+    ##                                       (11.260)   (4.194)  (15.820)   (5.564)   (3.404)   (5.703)   (5.211) 
     ##                                                                                                            
-    ## Constant                              33.293*** 15.991*** 28.834*** 14.465***   2.505   12.619*** 19.051***
-    ##                                        (8.074)   (3.322)   (8.302)   (1.946)   (2.838)   (2.161)   (6.014) 
+    ## RRP vote share * Change in vote share   0.005    -0.008     0.064     0.020              -0.001     0.013  
+    ##                                        (0.011)   (0.018)   (0.052)   (0.018)             (0.010)   (0.034) 
+    ##                                                                                                            
+    ## Constant                              41.741*** 14.864*** 52.511*** 15.615*** 12.585**  13.722**  18.427** 
+    ##                                        (9.444)   (3.880)  (12.558)   (2.908)   (4.156)   (4.385)   (6.126) 
     ##                                                                                                            
     ## -----------------------------------------------------------------------------------------------------------
     ## Party                                    Yes       Yes       Yes       Yes       Yes       Yes       Yes   
-    ## Country                                  No        No        No        No        No        No        No    
     ## -----------------------------------------------------------------------------------------------------------
-    ## Observations                             432       426       374       403       413       669       436   
-    ## R2                                      0.074     0.321     0.041     0.221     0.126     0.128     0.327  
-    ## Adjusted R2                             0.052     0.305     0.015     0.201     0.109     0.114     0.312  
+    ## Observations                             430       424       372       401       413       666       434   
+    ## R2                                      0.080     0.327     0.057     0.225     0.149     0.127     0.327  
+    ## Adjusted R2                             0.056     0.309     0.028     0.203     0.130     0.111     0.310  
     ## ===========================================================================================================
-    ## Note:                                                                           *p<0.1; **p<0.05; ***p<0.01
+    ## Note:                                                                         *p<0.05; **p<0.01; ***p<0.001
 
 ``` r
 bind_rows(
@@ -1169,150 +1194,129 @@ mp2 <- lm(data = reg_data,
 mp3 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country + 
-               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
+               time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp4 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
-               lag_prop_euroscepticism + country +
-               time_to_next + time_to_next_ep + vote_share + 
+               lag_prop_euroscepticism + country + 
+               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               time_to_next*lag_rrp_polled_voteshare + parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp5 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_name +
-               family_name*lag_rrp_polled_voteshare)
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               time_to_next*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
 
 mp6 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_2 +
-               family_2*lag_rrp_polled_voteshare )
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_name +
+               family_name*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
 
 mp7 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + parlgov_id +
-               change_voteshare*lag_rrp_polled_voteshare + parlgov_id)
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_2 +
+               family_2*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
 
-stargazer::stargazer(mp1, mp2, mp3, mp4, mp5, mp6, mp7,
+mp8 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + parlgov_id +
+               change_voteshare*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
+
+stargazer::stargazer(mp1, mp2, mp3, mp5, mp7, mp8,
                      omit.labels = c("Party", "Country"),
                      type = "text", title = "Table 5: Regression Using Polled RRP Vote",
                      dep.var.labels = "Share of Eurosceptic sentences",
                     covariate.labels = c("Time", "Lagged Euroscepticism",
                                           "Time to next election (months)",
                                           "Time to next EP election (months)",
-                                          "Log time to next election (months)",
-                                          "Log time to next EP election (months)",
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "Polled RRP Vote",
                                            "Party in Government",
-                                         "Time to next election * Polled RRP vote share",
-                                           "Liberal Party",
-                                          "Social Democratic Party",
-                                          "Polled RRP vote share * Liberal",
-                                          "RRP vote share * Social Democrat",
                                          "Centre-Right Party",
+                                         "Pro EU Public Opinion",
+                                         "Time to next election * Polled RRP vote share",
                                           "Polled RRP vote share * Centre-Right",
                                           "Polled RRP vote share * Change in vote share"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                    star.cutoffs = c(0.05, 0.01, 0.001)
+                    )
 ```
 
     ## 
     ## Table 5: Regression Using Polled RRP Vote
-    ## ===================================================================================================================
-    ##                                                                        Dependent variable:                         
-    ##                                               ---------------------------------------------------------------------
-    ##                                                                  Share of Eurosceptic sentences                    
-    ##                                                  (1)       (2)       (3)       (4)       (5)       (6)       (7)   
-    ## -------------------------------------------------------------------------------------------------------------------
-    ## Time                                           0.006**    0.005     0.005     0.005     0.004    0.006*     0.005  
-    ##                                                (0.003)   (0.003)   (0.003)   (0.003)   (0.003)   (0.003)   (0.003) 
-    ##                                                                                                                    
-    ## Lagged Euroscepticism                         0.097***  0.088***  0.089***  0.088***  0.087***  0.095***  0.088*** 
-    ##                                                (0.020)   (0.020)   (0.020)   (0.020)   (0.020)   (0.020)   (0.020) 
-    ##                                                                                                                    
-    ## Time to next election (months)                 -0.005    -0.006              -0.013    -0.006    -0.005    -0.006  
-    ##                                                (0.010)   (0.010)             (0.016)   (0.010)   (0.010)   (0.010) 
-    ##                                                                                                                    
-    ## Time to next EP election (months)              -0.008    -0.008              -0.008    -0.008    -0.008    -0.008  
-    ##                                                (0.008)   (0.008)             (0.008)   (0.008)   (0.008)   (0.008) 
-    ##                                                                                                                    
-    ## Log time to next election (months)                                 -0.277                                          
-    ##                                                                    (0.173)                                         
-    ##                                                                                                                    
-    ## Log time to next EP election (months)                              -0.065                                          
-    ##                                                                    (0.152)                                         
-    ##                                                                                                                    
-    ## Party size (vote share)                       -0.104*** -0.148*** -0.151*** -0.147*** -0.149*** -0.121*** -0.149***
-    ##                                                (0.032)   (0.040)   (0.040)   (0.040)   (0.033)   (0.032)   (0.040) 
-    ##                                                                                                                    
-    ## Change in vote share                            0.036     0.047     0.047     0.048    0.051*     0.046     0.041  
-    ##                                                (0.028)   (0.031)   (0.031)   (0.031)   (0.029)   (0.029)   (0.039) 
-    ##                                                                                                                    
-    ## Polled RRP Vote                                 0.038     0.035     0.034     0.021    -0.032     0.057     0.037  
-    ##                                                (0.035)   (0.035)   (0.035)   (0.042)   (0.040)   (0.039)   (0.036) 
-    ##                                                                                                                    
-    ## Party in Government                           -2.877*** -2.685*** -2.660*** -2.695*** -2.670*** -2.743*** -2.666***
-    ##                                                (0.340)   (0.359)   (0.358)   (0.360)   (0.349)   (0.344)   (0.367) 
-    ##                                                                                                                    
-    ## Time to next election * Polled RRP vote share                                 0.001                                
-    ##                                                                              (0.001)                               
-    ##                                                                                                                    
-    ## Liberal Party                                                                          -1.863*                     
-    ##                                                                                        (1.051)                     
-    ##                                                                                                                    
-    ## Social Democratic Party                                                                 0.339                      
-    ##                                                                                        (0.419)                     
-    ##                                                                                                                    
-    ## Polled RRP vote share * Liberal                                                       0.260***                     
-    ##                                                                                        (0.073)                     
-    ##                                                                                                                    
-    ## RRP vote share * Social Democrat                                                       0.082**                     
-    ##                                                                                        (0.033)                     
-    ##                                                                                                                    
-    ## Centre-Right Party                                                                               -0.337            
-    ##                                                                                                  (0.411)           
-    ##                                                                                                                    
-    ## Polled RRP vote share * Centre-Right                                                             -0.034            
-    ##                                                                                                  (0.031)           
-    ##                                                                                                                    
-    ## Polled RRP vote share * Change in vote share                                                                0.001  
-    ##                                                                                                            (0.003) 
-    ##                                                                                                                    
-    ## Constant                                      15.387*** 16.188*** 16.898*** 16.295*** 17.516*** 16.051*** 16.206***
-    ##                                                (1.358)   (1.580)   (1.714)   (1.592)   (1.459)   (1.417)   (1.582) 
-    ##                                                                                                                    
-    ## -------------------------------------------------------------------------------------------------------------------
-    ## Party                                            No        No        No        No        No        No        No    
-    ## Country                                          Yes       Yes       Yes       Yes       Yes       Yes       Yes   
-    ## -------------------------------------------------------------------------------------------------------------------
-    ## Observations                                    2,572     2,572     2,572     2,572     2,572     2,572     2,572  
-    ## R2                                              0.308     0.313     0.314     0.313     0.315     0.309     0.313  
-    ## Adjusted R2                                     0.304     0.308     0.308     0.308     0.310     0.305     0.308  
-    ## ===================================================================================================================
-    ## Note:                                                                                   *p<0.1; **p<0.05; ***p<0.01
+    ## =========================================================================================================
+    ##                                                                   Dependent variable:                    
+    ##                                               -----------------------------------------------------------
+    ##                                                             Share of Eurosceptic sentences               
+    ##                                                  (1)       (2)       (3)       (4)       (5)       (6)   
+    ## ---------------------------------------------------------------------------------------------------------
+    ## Time                                           0.006*     0.005    0.008*    0.008*    0.008*    0.009*  
+    ##                                                (0.003)   (0.003)   (0.003)   (0.003)   (0.003)   (0.004) 
+    ##                                                                                                          
+    ## Lagged Euroscepticism                         0.097***  0.088***  0.085***  0.085***  0.085***  0.085*** 
+    ##                                                (0.020)   (0.020)   (0.020)   (0.020)   (0.020)   (0.020) 
+    ##                                                                                                          
+    ## Time to next election (months)                 -0.005    -0.006    -0.005    -0.013    -0.005    -0.005  
+    ##                                                (0.010)   (0.010)   (0.010)   (0.016)   (0.010)   (0.010) 
+    ##                                                                                                          
+    ## Time to next EP election (months)              -0.008    -0.008    -0.013    -0.013    -0.013    -0.013  
+    ##                                                (0.008)   (0.008)   (0.008)   (0.008)   (0.008)   (0.008) 
+    ##                                                                                                          
+    ## Party size (vote share)                       -0.104**  -0.148*** -0.146*** -0.145*** -0.147*** -0.145***
+    ##                                                (0.032)   (0.040)   (0.040)   (0.040)   (0.041)   (0.040) 
+    ##                                                                                                          
+    ## Change in vote share                            0.036     0.047     0.059     0.060     0.059     0.067  
+    ##                                                (0.028)   (0.031)   (0.031)   (0.031)   (0.031)   (0.040) 
+    ##                                                                                                          
+    ## Polled RRP Vote                                 0.038     0.035     0.059     0.044     0.055     0.057  
+    ##                                                (0.035)   (0.035)   (0.036)   (0.043)   (0.046)   (0.036) 
+    ##                                                                                                          
+    ## Party in Government                           -2.877*** -2.685*** -2.712*** -2.725*** -2.704*** -2.739***
+    ##                                                (0.340)   (0.359)   (0.360)   (0.360)   (0.366)   (0.369) 
+    ##                                                                                                          
+    ## Centre-Right Party                                                                      0.289            
+    ##                                                                                        (1.068)           
+    ##                                                                                                          
+    ## Pro EU Public Opinion                                             -7.022**  -7.075**  -7.011**  -7.154** 
+    ##                                                                    (2.203)   (2.205)   (2.205)   (2.240) 
+    ##                                                                                                          
+    ## Time to next election * Polled RRP vote share                                 0.001                      
+    ##                                                                              (0.001)                     
+    ##                                                                                                          
+    ## Polled RRP vote share * Centre-Right                                                    0.006            
+    ##                                                                                        (0.051)           
+    ##                                                                                                          
+    ## Polled RRP vote share * Change in vote share                                                     -0.001  
+    ##                                                                                                  (0.003) 
+    ##                                                                                                          
+    ## Constant                                      15.387*** 16.188*** 19.017*** 19.161*** 18.706*** 19.046***
+    ##                                                (1.358)   (1.580)   (1.807)   (1.821)   (2.087)   (1.809) 
+    ##                                                                                                          
+    ## ---------------------------------------------------------------------------------------------------------
+    ## Party                                            No        No        No        No        No        No    
+    ## Country                                          Yes       Yes       Yes       Yes       Yes       Yes   
+    ## ---------------------------------------------------------------------------------------------------------
+    ## Observations                                    2,572     2,572     2,563     2,563     2,563     2,563  
+    ## R2                                              0.308     0.313     0.316     0.316     0.316     0.316  
+    ## Adjusted R2                                     0.304     0.308     0.310     0.310     0.310     0.310  
+    ## =========================================================================================================
+    ## Note:                                                                       *p<0.05; **p<0.01; ***p<0.001
 
-``` r
-plot_slopes(mp5, variables = "lag_rrp_polled_voteshare", 
-            by = "family_name") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-  labs(title = "Effect of Polled RRP Vote Share on Euroscepticism by Party Family",
-            xlab = "Polled RRP Vote Share (%)",
-            ylab = "Euroscepticism (Share of Eurosceptic Sentences)")
-```
-
-![](regression_final_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-\### Per country
+### Per country
 
 ``` r
 mp_aus1 <- lm(data = reg_data |> filter(country == "AUS"),
@@ -1320,126 +1324,126 @@ mp_aus1 <- lm(data = reg_data |> filter(country == "AUS"),
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_aus2 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_aus3 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_deu1 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_deu2 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_deu3 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_den1 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_den2 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_den3 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_swe1 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_swe2 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_swe3 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_esp1 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_esp2 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_esp3 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_nld1 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_nld2 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_nld3 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 stargazer::stargazer(mp_aus1, mp_deu1,mp_den1, mp_swe1, mp_esp1, mp_nld1,
                      omit.labels = c("Party", "Country"),
@@ -1453,57 +1457,62 @@ stargazer::stargazer(mp_aus1, mp_deu1,mp_den1, mp_swe1, mp_esp1, mp_nld1,
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "Polled RRP Vote",
-                                           "Party in Government"
+                                           "Party in Government",
+                                          "Pro EU Public Opinion"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
     ## 
     ## Table 6: Regression Using Polled RRP Vote Per Country
-    ## ===========================================================================================
-    ##                                                      Dependent variable:                   
-    ##                                   ---------------------------------------------------------
-    ##                                                Share of Eurosceptic sentences              
-    ##                                     AUS       DEU      DNK       SWE       ESP       NLD   
-    ##                                     (1)       (2)      (3)       (4)       (5)       (6)   
-    ## -------------------------------------------------------------------------------------------
-    ## Time                               -0.003    0.010    -0.025   -0.015*  0.014***  0.028*** 
-    ##                                   (0.010)   (0.007)  (0.017)   (0.008)   (0.005)   (0.010) 
-    ##                                                                                            
-    ## Lagged Euroscepticism              0.010   0.238***   0.072    -0.095*    0.049     0.055  
-    ##                                   (0.052)   (0.047)  (0.054)   (0.050)   (0.050)   (0.041) 
-    ##                                                                                            
-    ## Time to next election (months)     -0.023  -0.043**   0.031    0.029*     0.012    -0.033  
-    ##                                   (0.028)   (0.018)  (0.049)   (0.015)   (0.019)   (0.025) 
-    ##                                                                                            
-    ## Time to next EP election (months)  -0.028    0.011    -0.020  -0.033***   0.002    -0.020  
-    ##                                   (0.025)   (0.013)  (0.035)   (0.012)   (0.014)   (0.019) 
-    ##                                                                                            
-    ## Party size (vote share)            -0.087  -0.179**   -0.329  -0.187***   0.104     0.030  
-    ##                                   (0.193)   (0.085)  (0.253)   (0.063)   (0.068)   (0.083) 
-    ##                                                                                            
-    ## Change in vote share               0.120    0.133**   0.148    -0.072    -0.042    -0.077  
-    ##                                   (0.104)   (0.066)  (0.186)   (0.053)   (0.053)   (0.066) 
-    ##                                                                                            
-    ## Polled RRP Vote                   0.238**   0.177**  0.672**   -0.060   4.645***   -0.117  
-    ##                                   (0.098)   (0.081)  (0.335)   (0.072)   (1.361)   (0.091) 
-    ##                                                                                            
-    ## Party in Government               -3.412** -3.215*** -2.625** -1.467**  -3.265*** -4.427***
-    ##                                   (1.370)   (0.769)  (1.301)   (0.616)   (0.784)   (0.874) 
-    ##                                                                                            
-    ## Constant                          15.407*  16.809*** 20.178** 15.492***  -0.067   14.054***
-    ##                                   (8.237)   (3.419)  (8.458)   (1.826)   (2.998)   (2.257) 
-    ##                                                                                            
-    ## -------------------------------------------------------------------------------------------
-    ## Party                               Yes       Yes      Yes       Yes       Yes       Yes   
-    ## Country                              No       No        No       No        No        No    
-    ## -------------------------------------------------------------------------------------------
-    ## Observations                        368       422      362       401       405       614   
-    ## R2                                 0.078     0.313    0.051     0.218     0.149     0.125  
-    ## Adjusted R2                        0.055     0.298    0.026     0.201     0.129     0.110  
-    ## ===========================================================================================
-    ## Note:                                                           *p<0.1; **p<0.05; ***p<0.01
+    ## ============================================================================================
+    ##                                                      Dependent variable:                    
+    ##                                   ----------------------------------------------------------
+    ##                                                 Share of Eurosceptic sentences              
+    ##                                     AUS       DEU      DNK       SWE       ESP        NLD   
+    ##                                     (1)       (2)      (3)       (4)       (5)        (6)   
+    ## --------------------------------------------------------------------------------------------
+    ## Time                               0.003     0.010    0.010    -0.011     0.011*    0.028*  
+    ##                                   (0.010)   (0.007)  (0.023)   (0.012)   (0.005)    (0.011) 
+    ##                                                                                             
+    ## Lagged Euroscepticism              0.003   0.228***   0.064    -0.095     0.022      0.058  
+    ##                                   (0.052)   (0.047)  (0.054)   (0.050)   (0.050)    (0.041) 
+    ##                                                                                             
+    ## Time to next election (months)     -0.029  -0.049**   0.041    0.032*     0.008     -0.032  
+    ##                                   (0.028)   (0.018)  (0.049)   (0.015)   (0.019)    (0.025) 
+    ##                                                                                             
+    ## Time to next EP election (months)  -0.031    0.019    -0.053  -0.036**    -0.003    -0.024  
+    ##                                   (0.025)   (0.014)  (0.037)   (0.012)   (0.014)    (0.019) 
+    ##                                                                                             
+    ## Party size (vote share)            -0.120   -0.176*   -0.317  -0.183**    0.061      0.029  
+    ##                                   (0.194)   (0.085)  (0.254)   (0.063)   (0.068)    (0.084) 
+    ##                                                                                             
+    ## Change in vote share               0.150     0.124    0.078    -0.069     0.034     -0.080  
+    ##                                   (0.105)   (0.065)  (0.187)   (0.055)   (0.056)    (0.067) 
+    ##                                                                                             
+    ## Polled RRP Vote                    0.241*    0.119    0.615    -0.054    4.825***   -0.117  
+    ##                                   (0.098)   (0.093)  (0.335)   (0.074)   (1.344)    (0.091) 
+    ##                                                                                             
+    ## Party in Government               -3.719** -3.361*** -2.612*   -1.498*  -3.734***  -4.391***
+    ##                                   (1.377)   (0.773)  (1.297)   (0.629)   (0.785)    (0.877) 
+    ##                                                                                             
+    ## Pro EU Public Opinion             -20.481    4.705   -35.210*  -3.148   -11.758***  -1.874  
+    ##                                   (11.376)  (4.059)  (14.967)  (5.614)   (3.391)    (6.092) 
+    ##                                                                                             
+    ## Constant                          26.778*  14.076*** 41.147** 16.818***  10.546*   15.403***
+    ##                                   (10.359)  (4.012)  (12.602)  (2.851)   (4.256)    (4.456) 
+    ##                                                                                             
+    ## --------------------------------------------------------------------------------------------
+    ## Party                               Yes       Yes      Yes       Yes       Yes        Yes   
+    ## Country                              No       No        No       No         No        No    
+    ## --------------------------------------------------------------------------------------------
+    ## Observations                        368       420      360       399       405        611   
+    ## R2                                 0.086     0.321    0.063     0.223     0.174      0.123  
+    ## Adjusted R2                        0.061     0.304    0.036     0.203     0.153      0.107  
+    ## ============================================================================================
+    ## Note:                                                          *p<0.05; **p<0.01; ***p<0.001
 
 ``` r
 stargazer::stargazer(mp_aus2, mp_deu2,mp_den2, mp_swe2, mp_esp2, mp_nld2,
@@ -1519,60 +1528,65 @@ stargazer::stargazer(mp_aus2, mp_deu2,mp_den2, mp_swe2, mp_esp2, mp_nld2,
                                            "Change in vote share",
                                            "Polled RRP Vote",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "Time to next election * Polled RRP Vote"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
     ## 
     ## Table 7: Interaction between Polled RRP Vote and Time to Next Election Per Country
-    ## ==================================================================================================
-    ##                                                            Dependent variable:                    
-    ##                                         ----------------------------------------------------------
-    ##                                                       Share of Eurosceptic sentences              
-    ##                                           AUS       DEU       DNK       SWE       ESP       NLD   
-    ##                                           (1)       (2)       (3)       (4)       (5)       (6)   
-    ## --------------------------------------------------------------------------------------------------
-    ## Time                                     -0.004    0.010    -0.024    -0.014*  0.014***   0.019*  
-    ##                                         (0.010)   (0.007)   (0.017)   (0.008)   (0.005)   (0.011) 
-    ##                                                                                                   
-    ## Lagged Euroscepticism                    0.006   0.238***    0.069    -0.097*    0.055     0.060  
-    ##                                         (0.052)   (0.047)   (0.054)   (0.050)   (0.050)   (0.041) 
-    ##                                                                                                   
-    ## Time to next election (months)           -0.107   -0.040*   -0.195    0.038*     0.014   -0.130** 
-    ##                                         (0.102)   (0.021)   (0.209)   (0.022)   (0.019)   (0.053) 
-    ##                                                                                                   
-    ## Time to next EP election (months)        -0.038    0.011    -0.023   -0.030**    0.004    -0.021  
-    ##                                         (0.027)   (0.014)   (0.035)   (0.013)   (0.014)   (0.019) 
-    ##                                                                                                   
-    ## Party size (vote share)                  -0.094  -0.178**   -0.315   -0.189***  0.132*     0.031  
-    ##                                         (0.194)   (0.086)   (0.253)   (0.063)   (0.069)   (0.083) 
-    ##                                                                                                   
-    ## Change in vote share                     0.141    0.128*     0.163    -0.073    -0.061    -0.073  
-    ##                                         (0.107)   (0.068)   (0.186)   (0.053)   (0.053)   (0.065) 
-    ##                                                                                                   
-    ## Polled RRP Vote                          0.172     0.208     0.321    -0.030    -1.993   -0.221** 
-    ##                                         (0.125)   (0.134)   (0.461)   (0.088)   (3.225)   (0.104) 
-    ##                                                                                                   
-    ## Party in Government                     -3.541** -3.202*** -2.706**  -1.458**  -3.278*** -4.418***
-    ##                                         (1.379)   (0.772)   (1.303)   (0.617)   (0.780)   (0.872) 
-    ##                                                                                                   
-    ## Time to next election * Polled RRP Vote  0.004    -0.001     0.016    -0.001    1.227**   0.008** 
-    ##                                         (0.005)   (0.004)   (0.015)   (0.002)   (0.541)   (0.004) 
-    ##                                                                                                   
-    ## Constant                                17.553** 16.691*** 24.674*** 15.207***  -1.261   16.491***
-    ##                                         (8.612)   (3.448)   (9.377)   (1.892)   (3.029)   (2.548) 
-    ##                                                                                                   
-    ## --------------------------------------------------------------------------------------------------
-    ## Party                                     Yes       Yes       Yes       Yes       Yes       Yes   
-    ## Country                                    No       No        No        No        No        No    
-    ## --------------------------------------------------------------------------------------------------
-    ## Observations                              368       422       362       401       405       614   
-    ## R2                                       0.080     0.313     0.054     0.219     0.160     0.131  
-    ## Adjusted R2                              0.054     0.296     0.027     0.199     0.138     0.115  
-    ## ==================================================================================================
-    ## Note:                                                                  *p<0.1; **p<0.05; ***p<0.01
+    ## ===================================================================================================
+    ##                                                             Dependent variable:                    
+    ##                                         -----------------------------------------------------------
+    ##                                                       Share of Eurosceptic sentences               
+    ##                                           AUS       DEU       DNK       SWE       ESP        NLD   
+    ##                                           (1)       (2)       (3)       (4)       (5)        (6)   
+    ## ---------------------------------------------------------------------------------------------------
+    ## Time                                     0.002     0.010     0.010    -0.012     0.009      0.018  
+    ##                                         (0.010)   (0.007)   (0.023)   (0.012)   (0.005)    (0.012) 
+    ##                                                                                                    
+    ## Lagged Euroscepticism                    -0.002  0.229***    0.062    -0.097     0.026      0.064  
+    ##                                         (0.052)   (0.047)   (0.054)   (0.050)   (0.050)    (0.041) 
+    ##                                                                                                    
+    ## Time to next election (months)           -0.136   -0.044*   -0.151     0.041     0.010     -0.122* 
+    ##                                         (0.103)   (0.021)   (0.212)   (0.022)   (0.019)    (0.055) 
+    ##                                                                                                    
+    ## Time to next EP election (months)        -0.044    0.018    -0.054    -0.033*    -0.002    -0.022  
+    ##                                         (0.027)   (0.014)   (0.038)   (0.013)   (0.014)    (0.019) 
+    ##                                                                                                    
+    ## Party size (vote share)                  -0.132   -0.173*   -0.303   -0.185**    0.092      0.029  
+    ##                                         (0.194)   (0.085)   (0.255)   (0.063)   (0.068)    (0.084) 
+    ##                                                                                                    
+    ## Change in vote share                     0.178     0.116     0.093    -0.071     0.020     -0.071  
+    ##                                         (0.108)   (0.068)   (0.188)   (0.055)   (0.056)    (0.067) 
+    ##                                                                                                    
+    ## Polled RRP Vote                          0.158     0.160     0.322    -0.024     -3.614    -0.211* 
+    ##                                         (0.124)   (0.135)   (0.460)   (0.091)   (3.195)    (0.104) 
+    ##                                                                                                    
+    ## Party in Government                     -3.907** -3.353***  -2.679*   -1.480*  -3.813***  -4.384***
+    ##                                         (1.387)   (0.774)   (1.299)   (0.630)   (0.778)    (0.875) 
+    ##                                                                                                    
+    ## Pro EU Public Opinion                   -22.004    5.178   -34.043*   -2.646   -13.339***   0.548  
+    ##                                         (11.459)  (4.218)  (15.022)   (5.686)   (3.403)    (6.222) 
+    ##                                                                                                    
+    ## Time to next election * Polled RRP Vote  0.005    -0.002     0.014    -0.001    1.564**     0.008  
+    ##                                         (0.005)   (0.004)   (0.015)   (0.002)   (0.538)    (0.004) 
+    ##                                                                                                    
+    ## Constant                                30.359** 13.656**  44.127*** 16.341***  10.451*   16.111***
+    ##                                         (10.867)  (4.140)  (13.007)   (2.971)   (4.217)    (4.464) 
+    ##                                                                                                    
+    ## ---------------------------------------------------------------------------------------------------
+    ## Party                                     Yes       Yes       Yes       Yes       Yes        Yes   
+    ## Country                                    No       No        No        No         No        No    
+    ## ---------------------------------------------------------------------------------------------------
+    ## Observations                              368       420       360       399       405        611   
+    ## R2                                       0.089     0.321     0.066     0.224     0.191      0.128  
+    ## Adjusted R2                              0.061     0.303     0.036     0.201     0.169      0.111  
+    ## ===================================================================================================
+    ## Note:                                                                 *p<0.05; **p<0.01; ***p<0.001
 
 ``` r
 stargazer::stargazer(mp_aus3, mp_deu3, mp_den3, mp_swe3, mp_esp3, mp_nld3,
@@ -1588,10 +1602,13 @@ stargazer::stargazer(mp_aus3, mp_deu3, mp_den3, mp_swe3, mp_esp3, mp_nld3,
                                            "Change in vote share",
                                            "Polled RRP Vote",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "Polled RRP Vote * Change in vote share"
                                             ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001)
+                     )
 ```
 
     ## 
@@ -1600,48 +1617,51 @@ stargazer::stargazer(mp_aus3, mp_deu3, mp_den3, mp_swe3, mp_esp3, mp_nld3,
     ##                                                            Dependent variable:                    
     ##                                        -----------------------------------------------------------
     ##                                                      Share of Eurosceptic sentences               
-    ##                                           AUS       DEU       DNK       SWE       ESP       NLD   
-    ##                                           (1)       (2)       (3)       (4)       (5)       (6)   
+    ##                                          AUS       DEU       DNK       SWE       ESP        NLD   
+    ##                                          (1)       (2)       (3)       (4)       (5)        (6)   
     ## --------------------------------------------------------------------------------------------------
-    ## Time                                    -0.002     0.012    -0.028   -0.016**   0.013**  0.028*** 
-    ##                                         (0.010)   (0.008)   (0.018)   (0.008)   (0.005)   (0.010) 
+    ## Time                                    0.002     0.012     0.007    -0.012     0.010     0.028*  
+    ##                                        (0.010)   (0.008)   (0.023)   (0.012)   (0.005)    (0.011) 
     ##                                                                                                   
-    ## Lagged Euroscepticism                    0.005   0.238***    0.069   -0.098**    0.048     0.054  
-    ##                                         (0.052)   (0.047)   (0.054)   (0.050)   (0.050)   (0.041) 
+    ## Lagged Euroscepticism                   0.001   0.228***    0.061    -0.098*    0.020      0.058  
+    ##                                        (0.052)   (0.047)   (0.054)   (0.050)   (0.050)    (0.041) 
     ##                                                                                                   
-    ## Time to next election (months)          -0.033   -0.045**    0.034    0.030**    0.012    -0.034  
-    ##                                         (0.029)   (0.018)   (0.049)   (0.015)   (0.019)   (0.025) 
+    ## Time to next election (months)          -0.035  -0.051**    0.043    0.033*     0.008     -0.033  
+    ##                                        (0.029)   (0.018)   (0.049)   (0.015)   (0.019)    (0.025) 
     ##                                                                                                   
-    ## Time to next EP election (months)       -0.035     0.013    -0.020   -0.032***   0.003    -0.020  
-    ##                                         (0.025)   (0.014)   (0.035)   (0.012)   (0.014)   (0.019) 
+    ## Time to next EP election (months)       -0.035    0.020    -0.054   -0.036**    -0.003    -0.024  
+    ##                                        (0.025)   (0.014)   (0.037)   (0.012)   (0.014)    (0.019) 
     ##                                                                                                   
-    ## Party size (vote share)                 -0.175   -0.174**   -0.470*  -0.146**    0.087     0.027  
-    ##                                         (0.201)   (0.086)   (0.283)   (0.072)   (0.071)   (0.084) 
+    ## Party size (vote share)                 -0.172   -0.170*   -0.451    -0.141     0.046      0.026  
+    ##                                        (0.201)   (0.086)   (0.284)   (0.072)   (0.071)    (0.084) 
     ##                                                                                                   
-    ## Change in vote share                    0.398*    0.153**   -0.811    -0.104*   -0.047    -0.130  
-    ##                                         (0.207)   (0.075)   (0.880)   (0.060)   (0.053)   (0.122) 
+    ## Change in vote share                    0.329     0.144    -0.826    -0.102     0.029     -0.137  
+    ##                                        (0.213)   (0.075)   (0.879)   (0.061)   (0.057)    (0.125) 
     ##                                                                                                   
-    ## Polled RRP Vote                         0.202**   0.159*    0.727**   -0.013     3.213    -0.123  
-    ##                                         (0.101)   (0.087)   (0.338)   (0.083)   (2.256)   (0.091) 
+    ## Polled RRP Vote                         0.216*    0.105    0.668*    -0.005     3.474     -0.124  
+    ##                                        (0.101)   (0.096)   (0.338)   (0.084)   (2.226)    (0.092) 
     ##                                                                                                   
-    ## Party in Government                    -3.759*** -3.328***  -1.599   -1.993*** -3.035*** -4.480***
-    ##                                         (1.386)   (0.794)   (1.594)   (0.765)   (0.836)   (0.880) 
+    ## Party in Government                    -3.888** -3.462***  -1.649   -2.042**  -3.515***  -4.449***
+    ##                                        (1.388)   (0.795)   (1.587)   (0.776)   (0.836)    (0.883) 
     ##                                                                                                   
-    ## Polled RRP Vote * Change in vote share  -0.017    -0.006     0.076     0.011     0.560     0.004  
-    ##                                         (0.011)   (0.010)   (0.069)   (0.009)   (0.704)   (0.007) 
+    ## Pro EU Public Opinion                  -16.210    4.366   -35.118*   -3.131   -11.724***  -2.213  
+    ##                                        (12.197)  (4.108)  (14.965)   (5.611)   (3.393)    (6.127) 
     ##                                                                                                   
-    ## Constant                               18.995**  16.650*** 23.438*** 14.697***   0.570   14.235***
-    ##                                         (8.539)   (3.433)   (8.947)   (1.950)   (3.105)   (2.285) 
+    ## Polled RRP Vote * Change in vote share  -0.011   -0.006     0.072     0.011     0.528      0.004  
+    ##                                        (0.012)   (0.010)   (0.069)   (0.009)   (0.694)    (0.007) 
+    ##                                                                                                   
+    ## Constant                               26.809*  14.093*** 44.203*** 15.997***  11.116*   15.806***
+    ##                                        (10.360)  (4.016)  (12.931)   (2.931)   (4.324)    (4.519) 
     ##                                                                                                   
     ## --------------------------------------------------------------------------------------------------
-    ## Party                                     Yes       Yes       Yes       Yes       Yes       Yes   
-    ## Country                                   No        No        No        No        No        No    
+    ## Party                                    Yes       Yes       Yes       Yes       Yes        Yes   
+    ## Country                                   No       No        No        No         No        No    
     ## --------------------------------------------------------------------------------------------------
-    ## Observations                              368       422       362       401       405       614   
-    ## R2                                       0.084     0.313     0.054     0.221     0.150     0.125  
-    ## Adjusted R2                              0.058     0.296     0.027     0.201     0.129     0.109  
+    ## Observations                             368       420       360       399       405        611   
+    ## R2                                      0.089     0.321     0.066     0.226     0.175      0.124  
+    ## Adjusted R2                             0.060     0.303     0.037     0.204     0.152      0.106  
     ## ==================================================================================================
-    ## Note:                                                                  *p<0.1; **p<0.05; ***p<0.01
+    ## Note:                                                                *p<0.05; **p<0.01; ***p<0.001
 
 ``` r
 bind_rows(
@@ -1672,7 +1692,7 @@ bind_rows(
   geom_line()
 ```
 
-![](regression_final_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 plot_slopes(mp_nld2, variables = "lag_rrp_polled_voteshare", 
@@ -1683,7 +1703,7 @@ plot_slopes(mp_nld2, variables = "lag_rrp_polled_voteshare",
             ylab = "Euroscepticism (Share of Eurosceptic Sentences)")
 ```
 
-![](regression_final_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
 
 # Election window regression
 

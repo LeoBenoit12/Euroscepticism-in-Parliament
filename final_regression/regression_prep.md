@@ -1,7 +1,7 @@
 Regression Prep
 ================
 Duarte Amaro
-2025-06-17
+2025-06-18
 
 # Data cleaning
 
@@ -209,7 +209,8 @@ parlgov_elections <- read_csv("view_election.csv") |>
                           slice(rep(1, 15))
                         ) |>
               mutate(country = "DEU")
-            )
+            ) |>
+  mutate(election_year = format(election_date, "%Y"))
 ```
 
     ## Rows: 9016 Columns: 16
@@ -316,10 +317,26 @@ parlgov_elections <- election_dates |>
         )
       ) |>
       group_by(country) |>
-  right_join(parlgov_elections)
+  right_join(parlgov_elections) 
 ```
 
     ## Joining with `by = join_by(country, election_type, election_date)`
+
+``` r
+parlgov_elections <- parlgov_elections |>
+  left_join(parlgov_elections |> 
+              filter(election_type == "parliament") |> 
+              dplyr::select(country, election_year, rrp_voteshare) |> 
+              distinct() |> 
+              group_by(country) |> 
+              mutate(
+                rrp_lag = dplyr::lag(rrp_voteshare, order_by = election_year), 
+                rrp_lag2 = dplyr::lag(rrp_voteshare, order_by = election_year, 2)
+                )
+            )
+```
+
+    ## Joining with `by = join_by(country, rrp_voteshare, election_year)`
 
 ``` r
 ## Getting cabinet composition data
@@ -485,7 +502,7 @@ vote_changes <- parlgov_elections |>  # Calculating change in voteshare
               filter(election_type == "parliament") |>
               dplyr::select(country, election_date, 
                             party_name_short, vote_share, 
-                            party_id, rrp_voteshare) |>
+                            party_id, rrp_voteshare, rrp_lag, rrp_lag2) |>
               group_by(party_id) |>
               mutate(
                 change_voteshare = vote_share - lag(vote_share, order_by = election_date)
@@ -519,169 +536,304 @@ nrow(data_monthly) == nrow(data_monthly_1)
 ## Cleaning Eurobarometer data
 
 ``` r
-# eb98_02 <- haven::read_dta("ZA3521_v2-0-1.dta") |> 
-#   filter(year >= 1998 & nation2 %in% c(3, 4, 7, 9, 12, 17, 18)) |>
-#   mutate(
-#     nation2 = case_when(
-#       nation2 == 3 ~ "NLD",
-#       nation2 == 4 ~ "DEU",
-#       nation2 == 7 ~ "DNK",
-#       nation2 == 9 ~ "GBR", 
-#       nation2 == 12 ~ "ESP",
-#       nation2 == 17 ~ "SWE",
-#       nation2 == 18 ~ "AUS" 
-#     ) |> as.character()
-#   )
-# 
-# eb04_21 <- haven::read_dta("harmonised_EB_2004-2021_v3-0-0.dta") |> 
-#   filter(country %in% c(3, 4, 7, 9, 12, 17, 18)) |>
-#   mutate(
-#     country = case_when(
-#       country == 3 ~ "NLD",
-#       country == 4 ~ "DEU",
-#       country == 7 ~ "DNK",
-#       country == 9 ~ "GBR", 
-#       country == 12 ~ "ESP",
-#       country == 17 ~ "SWE",
-#       country == 18 ~ "AUS" 
-#     ),
-#     date = as.Date(as.character(intdate_end), format = "%Y%m%d"),
-#     year_month = as.factor(format(date, "%Y-%m"))
-#   )
+eb <- haven::read_dta("EB_1973_2022_2025_JAN.dta")
+
+
+eb98_2021 <- eb |>
+  filter(YEAR >= 1998 & YEAR <= 2021 & NATION2 %in% c(3, 4, 7, 9, 11, 14, 15)) |>
+  mutate(
+    nation2 = case_when(
+      NATION2 == 3 ~ "NLD",
+      NATION2 == 4 ~ "DEU",
+      NATION2 == 7 ~ "DNK",
+      NATION2 == 9 ~ "GBR",
+      NATION2 == 11 ~ "ESP",
+      NATION2 == 14 ~ "SWE",
+      NATION2 == 15 ~ "AUS"
+    ) |> as.character(),
+    month_chr = str_replace(as.character(round(month, digits = 2)), "\\.", "-"),
+    month_chr = case_when(
+      month_chr == "9-1" ~ "10", # This is a hack to deal with the fact that some months are coded as 9.10 
+                                  # but rounding leaves it as 1
+      .default = month_chr
+    ),
+    month_2 = sapply(str_split(month_chr, "-"), function(x) tail(x, 1)),
+    year_month = paste(as.character(YEAR), sprintf("%02d", as.numeric(month_2)), sep = "-") |>
+      as.factor(),
+    date = paste(as.character(year_month), "01", sep = "-") |>
+      as.Date()
+  ) 
+
+eb_final <- eb98_2021 |>
+  dplyr::select(
+    nation2, year_month, date, MEMBRSHP, BENEFIT, EUSPEED1, EUSPEED2, TRUSTEC, TRUSTEP, SATISDEU, FEEL
+  ) |>
+    mutate(
+    mem = case_when(
+      MEMBRSHP == 1 ~ "Good",
+      MEMBRSHP == 0 ~ "Neither",
+      MEMBRSHP == -1 ~ "Bad",
+      TRUE ~ NA_character_
+    ) |>
+      factor(levels = c("Good", "Neither", "Bad")),
+    std_mem = (as.numeric(MEMBRSHP) + 1)/2,
+    
+    benefit = case_when(
+      BENEFIT == 1 ~ "Benefited",
+      BENEFIT == 0 ~ "Not benefited",
+      TRUE ~ NA_character_
+    ) |>
+      factor(levels = c("Benefited", "Not benefited")),
+    std_ben = as.numeric(BENEFIT),
+    
+    trust_ec = case_when(
+      TRUSTEC == 1 ~ "Trust",
+      TRUSTEC == 0 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    std_trust_ec = as.numeric(TRUSTEC),
+    
+    trust_ep = case_when(
+      TRUSTEP == 1 ~ "Trust",
+      TRUSTEP == 0 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    std_trust_ep = as.numeric(TRUSTEP),
+    
+    sat_deu = case_when(
+      SATISDEU == 3 ~ "Very satisfied",
+      SATISDEU == 2 ~ "Fairly satisfied",
+      SATISDEU == 1 ~ "Not very satisfied",
+      SATISDEU == 0 ~ "Not at all satisfied",
+      TRUE ~ NA_character_
+    ) |>
+      factor(),
+    std_sat_deu = as.numeric(SATISDEU)/3,
+    
+    feel = case_when(
+      FEEL == 2 ~ "European",
+      FEEL == 1 ~ "Shared",
+      FEEL == 0 ~ "National",
+      TRUE ~ NA_character_
+    ),
+    std_feel = as.numeric(FEEL)/2
+    )
+
+nrow(eb_final) == nrow(eb98_2021)
 ```
 
+    ## [1] TRUE
+
 ``` r
-# ebjoint_mem <- eb70_02 |>
-#     mutate(
-#     mem = case_when(
-#       membrshp == 1 ~ "Good",
-#       membrshp == 2 ~ "Neither",
-#       membrshp == 3 ~ "Bad",
-#       TRUE ~ NA_character_
-#     ) |> 
-#       factor(levels = c("Good", "Neither", "Bad"))
-#   ) |>
-#   dplyr::select(nation2, year, mem) |>
-#   rename(country = nation2) |>
-#   bind_rows(
-#     eb04_21 |>
-#     mutate(
-#     mem = case_when(
-#       mem == 1 ~ "Good",
-#       mem == 2 ~ "Neither",
-#       mem == 3 ~ "Bad",
-#       TRUE ~ NA_character_) |> 
-#       factor(levels = c("Good", "Neither", "Bad"))
-#     ) |>
-#       dplyr::select(country, year, mem)
-#   )
-# 
-# ebjoint_mem |>
-#   filter(!is.na(mem)) |>
-#   group_by(year, country, mem) |>
-#   summarise(
-#     count = n()
-#   ) |> 
-#   ungroup() |>
-#   ggplot(aes(fill = mem, y = count, x = year)) +
-#   geom_bar(position = "fill", stat = "identity") +
-#   facet_wrap(~ country) +
-#   scale_fill_manual(values = c("Good" = "green4", "Neither" = "gold", "Bad" = "red3"), name = "") +
-#   labs(x = "Year",
-#        y = "Proportion of responses",
-#        title = "Membership perception by country",
-#        subtitle = "Eurobarometer data")
-# 
-# ```
-# 
-# ```{r}
-# 
-# ebjoint_trust <- eb70_02 |>
-#     mutate(
-#     trustec = case_when(
-#       trustec == 1 ~ "Trust",
-#       trustec == 2 ~ "No Trust",
-#       TRUE ~ NA_character_
-#     ) |> as.factor()
-#   ) |>
-#   dplyr::select(nation2, year, trustec) |>
-#   rename(country = nation2) |>
-#   bind_rows(
-#     eb04_21 |>
-#     mutate(
-#     trustec = case_when(
-#       treu_com == 1 ~ "Trust",
-#       treu_com == 2 ~ "No Trust",
-#       TRUE ~ NA_character_) |> as.factor()
-#     ) |>
-#       dplyr::select(country, year, trustec)
-#   )
-# 
-# ebjoint_trust |>
-#   filter(!is.na(trustec)) |>
-#   group_by(year, country, trustec) |>
-#   # Now to get a count of each response to mem:
-#   summarise(
-#     count = n()
-#   ) |> 
-#   ungroup() |>
-#   ggplot(aes(fill = trustec, y = count, x = year)) +
-#   geom_bar(position = "fill", stat = "identity") +
-#   facet_wrap(~ country) +
-#   scale_fill_manual(values = c("Trust" = "green4", "No Trust" = "red3"), name = "") +
-#   labs(x = "Year",
-#        y = "Proportion of responses",
-#        title = "Trust in the European Commission by country",
-#        subtitle = "Eurobarometer data")
-# 
-# ```
-# 
-# ```{r}
-# 
-# ebjoin <- eb70_02 |>
-#     mutate(
-#     mem = case_when(
-#       membrshp == 1 ~ "Good",
-#       membrshp == 2 ~ "Neither",
-#       membrshp == 3 ~ "Bad",
-#       TRUE ~ NA_character_) |> 
-#       factor(levels = c("Good", "Neither", "Bad")),
-#     trustec = case_when(
-#       trustec == 1 ~ "Trust",
-#       trustec == 2 ~ "No Trust",
-#       TRUE ~ NA_character_) |> 
-#       as.factor()
-#   ) |>
-#   dplyr::select(nation2, year, mem, trustec) |>
-#   rename(country = nation2) |>
-#   bind_rows(
-#     eb04_21 |>
-#     mutate(
-#     mem = case_when(
-#       mem == 1 ~ "Good",
-#       mem == 2 ~ "Neither",
-#       mem == 3 ~ "Bad",
-#       TRUE ~ NA_character_) |> 
-#       factor(levels = c("Good", "Neither", "Bad")),
-#     trustec = case_when(
-#       treu_com == 1 ~ "Trust",
-#       treu_com == 2 ~ "No Trust",
-#       TRUE ~ NA_character_) |> 
-#       as.factor()
-#     ) |>
-#       dplyr::select(country, year, mem, trustec)
-#   )
-# 
-# # Calculate the cronbach's alpha for the trust and membership variables
-# psych::alpha(ebjoin |>
-#                dplyr::select(mem, trustec) |>
-#   mutate(
-#     mem = as.numeric(mem),
-#     trustec = as.numeric(trustec)
-#   ) |>
-#   na.omit(),
-#   check.keys = T)
+eb_final |>
+  arrange(nation2, date) |>
+  filter(!is.na(mem)) |>
+  group_by(date, nation2, mem) |>
+  summarise(
+    count = n()
+  ) |>
+  ungroup() |> 
+  ggplot(aes(fill = mem, y = count, x = date)) +
+  geom_bar(position = "fill", stat = "identity") +
+  facet_wrap(~ nation2) +
+  scale_fill_manual(values = c("Good" = "green4", "Neither" = "gold", "Bad" = "red3"), name = "") +
+  labs(x = "Year",
+       y = "Proportion of responses",
+       title = "Membership perception by country",
+       subtitle = "Eurobarometer data")
 ```
+
+    ## `summarise()` has grouped output by 'date', 'nation2'. You can override using
+    ## the `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
+eb_final |>
+  arrange(nation2, date) |>
+  filter(!is.na(benefit)) |>
+  group_by(date, nation2, benefit) |>
+  summarise(
+    count = n()
+  ) |>
+  ungroup() |> 
+  ggplot(aes(fill = benefit, y = count, x = date)) +
+  geom_bar(position = "fill", stat = "identity") +
+  facet_wrap(~ nation2) +
+  scale_fill_manual(values = c("Benefited" = "green4", "Not benefited" = "red3"), name = "") +
+  labs(x = "Year",
+       y = "Proportion of responses",
+       title = "Perception of membership benefit by country",
+       subtitle = "Eurobarometer data")
+```
+
+    ## `summarise()` has grouped output by 'date', 'nation2'. You can override using
+    ## the `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
+
+``` r
+eb_final |>
+  arrange(nation2, date) |>
+  filter(!is.na(trust_ec)) |>
+  group_by(date, nation2, trust_ec) |>
+  summarise(
+    count = n()
+  ) |>
+  ungroup() |> 
+  ggplot(aes(fill = trust_ec, y = count, x = date)) +
+  geom_bar(position = "fill", stat = "identity") +
+  facet_wrap(~ nation2) +
+  scale_fill_manual(values = c("Trust" = "green4", "No Trust" = "red3"), name = "") +
+  labs(x = "Year",
+       y = "Proportion of responses",
+       title = "Trust in the European Commission by country",
+       subtitle = "Eurobarometer data")
+```
+
+    ## `summarise()` has grouped output by 'date', 'nation2'. You can override using
+    ## the `.groups` argument.
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
+
+``` r
+# Calculate the cronbach's alpha for the membership, 
+psych::alpha(eb_final |>
+               dplyr::select(std_mem, std_ben, std_trust_ec, 
+                             std_trust_ep, std_sat_deu, std_feel),
+  check.keys = T)
+```
+
+    ## 
+    ## Reliability analysis   
+    ## Call: psych::alpha(x = dplyr::select(eb_final, std_mem, std_ben, std_trust_ec, 
+    ##     std_trust_ep, std_sat_deu, std_feel), check.keys = T)
+    ## 
+    ##   raw_alpha std.alpha G6(smc) average_r S/N     ase mean   sd median_r
+    ##       0.81      0.81    0.82      0.42 4.3 0.00048 0.59 0.34     0.45
+    ## 
+    ##     95% confidence boundaries 
+    ##          lower alpha upper
+    ## Feldt     0.81  0.81  0.81
+    ## Duhachek  0.81  0.81  0.81
+    ## 
+    ##  Reliability if an item is dropped:
+    ##              raw_alpha std.alpha G6(smc) average_r S/N alpha se var.r med.r
+    ## std_mem           0.76      0.76    0.76      0.39 3.2  0.00060 0.031  0.43
+    ## std_ben           0.77      0.77    0.76      0.40 3.3  0.00058 0.031  0.44
+    ## std_trust_ec      0.75      0.76    0.74      0.39 3.2  0.00063 0.021  0.42
+    ## std_trust_ep      0.75      0.76    0.74      0.39 3.2  0.00063 0.021  0.42
+    ## std_sat_deu       0.80      0.79    0.80      0.43 3.8  0.00054 0.034  0.45
+    ## std_feel          0.83      0.83    0.83      0.50 5.1  0.00044 0.014  0.45
+    ## 
+    ##  Item statistics 
+    ##                   n raw.r std.r r.cor r.drop mean   sd
+    ## std_mem      214872  0.81  0.78  0.74   0.68 0.70 0.38
+    ## std_ben      173213  0.82  0.76  0.71   0.63 0.62 0.49
+    ## std_trust_ec 100910  0.82  0.78  0.77   0.68 0.57 0.50
+    ## std_trust_ep 114961  0.82  0.78  0.77   0.68 0.60 0.49
+    ## std_sat_deu  103968  0.64  0.68  0.56   0.52 0.48 0.26
+    ## std_feel      88940  0.56  0.51  0.34   0.31 0.32 0.37
+    ## 
+    ## Non missing response frequency for each item
+    ##                 0 0.333333333333333  0.5 0.666666666666667    1  1.5 miss
+    ## std_mem      0.16              0.00 0.27              0.00 0.56 0.00 0.34
+    ## std_ben      0.38              0.00 0.00              0.00 0.62 0.00 0.47
+    ## std_trust_ec 0.43              0.00 0.00              0.00 0.57 0.00 0.69
+    ## std_trust_ep 0.40              0.00 0.00              0.00 0.60 0.00 0.65
+    ## std_sat_deu  0.12              0.36 0.00              0.46 0.05 0.00 0.68
+    ## std_feel     0.47              0.00 0.44              0.00 0.06 0.03 0.73
+
+``` r
+## Alpha of 0.81
+
+eb_means <- eb_final |>
+  group_by(nation2, year_month) |>
+  summarise(
+    std_mem = mean(std_mem, na.rm = TRUE),
+    std_ben = mean(std_ben, na.rm = TRUE),
+    std_trust_ec = mean(std_trust_ec, na.rm = TRUE),
+    std_trust_ep = mean(std_trust_ep, na.rm = TRUE),
+    std_sat_deu = mean(std_sat_deu, na.rm = TRUE),
+    std_feel = mean(std_feel, na.rm = TRUE)
+  ) |>
+  ungroup() |>
+  mutate(std_mem = case_when(is.nan(std_mem) ~ NA_real_,
+                             .default = std_mem),
+         std_ben = case_when(is.nan(std_ben) ~ NA_real_,
+                             .default = std_ben),
+         std_trust_ec = case_when(is.nan(std_trust_ec) ~ NA_real_,
+                                  .default = std_trust_ec),
+         std_trust_ep = case_when(is.nan(std_trust_ep) ~ NA_real_,
+                                  .default = std_trust_ep),
+         std_sat_deu = case_when(is.nan(std_sat_deu) ~ NA_real_,
+                                 .default = std_sat_deu),
+         std_feel = case_when(is.nan(std_feel) ~ NA_real_,
+                              .default = std_feel)
+  )
+```
+
+    ## `summarise()` has grouped output by 'nation2'. You can override using the
+    ## `.groups` argument.
+
+``` r
+eu_public_opinion_0 <- rowMeans(eb_means |> 
+                                  dplyr::select(std_mem, std_ben, 
+                                                std_trust_ep, std_trust_ec, 
+                                                std_sat_deu, std_feel), na.rm = TRUE)
+
+eu_public_opinion_0[is.nan(eu_public_opinion_0)] <- NA_real_ # Replace NaN with NA
+
+eb_means <- eb_means |>
+  mutate(eu_public_opinion_0 = eu_public_opinion_0) |>
+  dplyr::select(nation2, year_month, std_mem, std_trust_ec, std_sat_deu, eu_public_opinion_0) |>
+  rename(country = nation2)
+
+eb_months <- data_monthly |> 
+  dplyr::select(country, year_month) |>
+  distinct() |>
+  left_join(eb_means) |>
+  mutate(date = as.Date(paste(year_month, "-01", sep = ""))) |> 
+  arrange(country, year_month) |>
+  group_by(country) |>
+  mutate(
+    eu_public_opinion = zoo::na.locf0(eu_public_opinion_0, fromLast = FALSE),
+    std_mem = zoo::na.locf0(std_mem, fromLast = FALSE),
+    std_trust_ec = zoo::na.locf0(std_trust_ec, fromLast = FALSE),
+    std_sat_deu = zoo::na.locf0(std_sat_deu, fromLast = FALSE)
+  )
+```
+
+    ## Joining with `by = join_by(country, year_month)`
+
+``` r
+eb_months |>
+  #mutate(date = as.Date(paste(year_month, "-01", sep = ""))) |>
+  #filter(!is.na(eu_public_opinion)) |>
+  arrange(country, date) |>
+  ggplot(aes(x = date, y = eu_public_opinion)) +
+  geom_point() +
+  geom_path() +
+  geom_point(aes(x = date, y = eu_public_opinion_0), color = "red", alpha = 0.5) +
+  facet_wrap(~ country) +
+  labs(x = "Year",
+       y = "Public opinion on the EU",
+       title = "Public opinion on the EU by country",
+       subtitle = "Eurobarometer data")
+```
+
+    ## Warning: Removed 14 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+    ## Warning: Removed 2 rows containing missing values or values outside the scale range
+    ## (`geom_path()`).
+
+    ## Warning: Removed 1376 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](regression_prep_files/figure-gfm/unnamed-chunk-3-4.png)<!-- -->
 
 ## Cleaning Coalition Inclusion Probabilities
 
@@ -3028,14 +3180,14 @@ reg_data <- data_monthly |>
   dplyr::select(country, parlgov_id, name_short, name, name_english, 
                 year_month, prop_eu_mention, prop_euroscepticism, 
                 time_from_last, time_to_next, time_to_next_ep, vote_share, 
-                rrp_voteshare, change_voteshare, cabinet_party) |>
+                rrp_voteshare, rrp_lag, rrp_lag2, change_voteshare, cabinet_party) |>
   distinct() |>
   group_by(country, name_short) |>
   mutate(
-    lag__prop_eu_mention = lag(prop_eu_mention, order_by = year_month),
+    lag__prop_eu_mention = dplyr::lag(prop_eu_mention, order_by = year_month),
     change_eu_mention = prop_eu_mention - lag__prop_eu_mention,
     
-    lag_prop_euroscepticism = lag(prop_euroscepticism, order_by = year_month),
+    lag_prop_euroscepticism = dplyr::lag(prop_euroscepticism, order_by = year_month),
     change_euroscepticism = prop_euroscepticism - lag_prop_euroscepticism
   ) |>
   ungroup() |>
@@ -3065,7 +3217,10 @@ reg_data <- data_monthly |>
   ) |>
   left_join(polls, 
             by = c("country", "year_month")) |>
-  mutate(parlgov_id = as.factor(parlgov_id))
+  mutate(parlgov_id = as.factor(parlgov_id)) |>
+  left_join(eb_months |>
+              dplyr::select(-eu_public_opinion_0),
+            by = c("country", "year_month"))
 ```
 
     ## Rows: 1707 Columns: 23
@@ -3079,7 +3234,7 @@ reg_data <- data_monthly |>
     ## Joining with `by = join_by(country, parlgov_id)`
 
 ``` r
-#write.csv(reg_data, "reg_data.csv", row.names = FALSE)
+write.csv(reg_data, "reg_data.csv", row.names = FALSE)
 ```
 
 The variables are in the `reg_data` dataframe.
@@ -3105,5 +3260,6 @@ coalition inclusion probabilities.
 | Current government participation           | `cabinet_party`            |
 | Party family (Cons/CD, Lib, or SocDem)     | `family_name`              |
 | Party family (Centre-Right or Centre-Left) | `family_2`                 |
+| Public opinion regarding the EU            | `eu_public_opinion`        |
 
 Variable names in the dataset

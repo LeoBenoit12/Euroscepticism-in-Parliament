@@ -427,39 +427,46 @@ m2 <- lm(data = reg_data,
 
 m3 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
-               lag_prop_euroscepticism + country +
+               lag_prop_euroscepticism + country + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               time_to_next*rrp_voteshare + parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m4 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + family_name +
-               family_name*rrp_voteshare + parlgov_id)
+               change_voteshare + rrp_voteshare + cabinet_party +
+               time_to_next*rrp_voteshare + parlgov_id + eu_public_opinion)
 
 m5 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + family_2 +
-               family_2*rrp_voteshare + parlgov_id)
+               change_voteshare + rrp_voteshare + cabinet_party + family_name +
+               family_name*rrp_voteshare + parlgov_id + eu_public_opinion)
 
 m6 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id +
-               change_voteshare*rrp_voteshare)
+               change_voteshare + rrp_voteshare + cabinet_party + family_2 +
+               family_2*rrp_voteshare + parlgov_id + eu_public_opinion)
 
 m7 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
-               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id)
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id +
+               change_voteshare*rrp_voteshare + eu_public_opinion)
 
-stargazer::stargazer(m1, m2, m3, m5, m6, 
+m8 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
+               change_voteshare + rrp_voteshare + cabinet_party + parlgov_id + eu_public_opinion)
+
+stargazer::stargazer(m1, m2, m3, m4, m6, m7, 
                      omit.labels = c("Party", "Country"),
                      type = "text", title = "Table 1: Regression Using RRP Vote Share",
                      #out = "table.html",
@@ -472,12 +479,14 @@ stargazer::stargazer(m1, m2, m3, m5, m6,
                                            "RRP vote share",
                                            "Party in Government",
                                           "Centre-Right Party",
+                                          "Pro EU Public Opinion",
                                           "Time to next election * RRP vote share",
                                           "RRP vote share * Centre-Right",
                                           "RRP vote share * Change in vote share"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 
 ```
 
@@ -490,48 +499,48 @@ m_aus1 <- lm(data = reg_data |> filter(country == "AUS"),
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_aus2 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion +  time_to_next*rrp_voteshare)
 
 m_aus3 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_deu1 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_deu2 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_deu3 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_den1 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + rrp_voteshare + cabinet_party +
+               change_voteshare + eu_public_opinion + rrp_voteshare + cabinet_party +
                parlgov_id)
 
 m_den2 <- lm(data = reg_data |> filter(country == "DNK"),
@@ -539,101 +548,101 @@ m_den2 <- lm(data = reg_data |> filter(country == "DNK"),
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_den3 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_swe1 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_swe2 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_swe3 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_esp1 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_esp2 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_esp3 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_nld1 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_nld2 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_nld3 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 m_uk1 <- lm(data = reg_data |> filter(country == "GBR"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 m_uk2 <- lm(data = reg_data |> filter(country == "GBR"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + time_to_next*rrp_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*rrp_voteshare)
 
 m_uk3 <- lm(data = reg_data |> filter(country == "GBR"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + rrp_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*rrp_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*rrp_voteshare)
 
 stargazer::stargazer(m_aus1, m_deu1,m_den1, m_swe1, m_esp1, m_nld1, m_uk1,
-                     omit.labels = c("Party", "Country"),
+                     omit.labels = c("Party"),
                      type = "text", title = "Table 2: Regression Using RRP Vote Share Per Country",
                      #out = "table.html",
                      dep.var.labels = "Share of Eurosceptic sentences",
@@ -644,13 +653,15 @@ stargazer::stargazer(m_aus1, m_deu1,m_den1, m_swe1, m_esp1, m_nld1, m_uk1,
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "RRP vote share",
-                                           "Party in Government"
+                                           "Party in Government",
+                                          "Pro EU Public Opinion"
                                            ),
-                     omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit = c("parlgov_id"),
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 
 stargazer::stargazer(m_aus2, m_deu2,m_den2, m_swe2, m_esp2, m_nld2, m_uk2,
-                     omit.labels = c("Party", "Country"),
+                     omit.labels = c("Party"),
                      type = "text", title = "Table 3: Interaction between RRP Vote Share and Time to Next Election Per Country",
                      #out = "table.html",
                      dep.var.labels = "Share of Eurosceptic sentences",
@@ -662,13 +673,15 @@ stargazer::stargazer(m_aus2, m_deu2,m_den2, m_swe2, m_esp2, m_nld2, m_uk2,
                                            "Change in vote share",
                                            "RRP vote share",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "Time to next election * RRP vote share"
                                            ),
-                     omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit = c("parlgov_id"),
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 
 stargazer::stargazer(m_aus3, m_deu3, m_den3, m_swe3, m_esp3, m_nld3, m_uk3,
-                     omit.labels = c("Party", "Country"),
+                     omit.labels = c("Party"),
                      type = "text", title = "Table 4: Interaction between RRP Vote Share and Change in Vote Share Per Country",
                      #out = "table.html",
                      dep.var.labels = "Share of Eurosceptic sentences",
@@ -680,10 +693,12 @@ stargazer::stargazer(m_aus3, m_deu3, m_den3, m_swe3, m_esp3, m_nld3, m_uk3,
                                            "Change in vote share",
                                            "RRP vote share",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "RRP vote share * Change in vote share"
                                             ),
-                     omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit = c("parlgov_id"),
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 
 
 ```
@@ -745,76 +760,70 @@ mp2 <- lm(data = reg_data,
 mp3 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country + 
-               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
+               time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp4 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
-               lag_prop_euroscepticism + country +
-               time_to_next + time_to_next_ep + vote_share + 
+               lag_prop_euroscepticism + country + 
+               log(time_to_next + 1) + log(time_to_next_ep + 1) + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               time_to_next*lag_rrp_polled_voteshare + parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp5 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_name +
-               family_name*lag_rrp_polled_voteshare)
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
+               time_to_next*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
 
 mp6 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_2 +
-               family_2*lag_rrp_polled_voteshare )
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_name +
+               family_name*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
 
 mp7 <- lm(data = reg_data,
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + country +
                time_to_next + time_to_next_ep + vote_share + 
-               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + parlgov_id +
-               change_voteshare*lag_rrp_polled_voteshare + parlgov_id)
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + family_2 +
+               family_2*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
 
-stargazer::stargazer(mp1, mp2, mp3, mp4, mp5, mp6, mp7,
+mp8 <- lm(data = reg_data,
+             prop_euroscepticism ~ as.numeric(year_month) + 
+               lag_prop_euroscepticism + country +
+               time_to_next + time_to_next_ep + vote_share + 
+               change_voteshare + lag_rrp_polled_voteshare + cabinet_party + parlgov_id +
+               change_voteshare*lag_rrp_polled_voteshare + parlgov_id + eu_public_opinion)
+
+stargazer::stargazer(mp1, mp2, mp3, mp5, mp7, mp8,
                      omit.labels = c("Party", "Country"),
                      type = "text", title = "Table 5: Regression Using Polled RRP Vote",
                      dep.var.labels = "Share of Eurosceptic sentences",
                     covariate.labels = c("Time", "Lagged Euroscepticism",
                                           "Time to next election (months)",
                                           "Time to next EP election (months)",
-                                          "Log time to next election (months)",
-                                          "Log time to next EP election (months)",
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "Polled RRP Vote",
                                            "Party in Government",
-                                         "Time to next election * Polled RRP vote share",
-                                           "Liberal Party",
-                                          "Social Democratic Party",
-                                          "Polled RRP vote share * Liberal",
-                                          "RRP vote share * Social Democrat",
                                          "Centre-Right Party",
+                                         "Pro EU Public Opinion",
+                                         "Time to next election * Polled RRP vote share",
                                           "Polled RRP vote share * Centre-Right",
                                           "Polled RRP vote share * Change in vote share"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                    star.cutoffs = c(0.05, 0.01, 0.001)
+                    )
 
 
 ```
 
-```{r}
-
-plot_slopes(mp5, variables = "lag_rrp_polled_voteshare", 
-            by = "family_name") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-  labs(title = "Effect of Polled RRP Vote Share on Euroscepticism by Party Family",
-            xlab = "Polled RRP Vote Share (%)",
-            ylab = "Euroscepticism (Share of Eurosceptic Sentences)")
-
-```
 ### Per country
 
 ```{r}
@@ -824,126 +833,126 @@ mp_aus1 <- lm(data = reg_data |> filter(country == "AUS"),
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_aus2 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_aus3 <- lm(data = reg_data |> filter(country == "AUS"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_deu1 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_deu2 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_deu3 <- lm(data = reg_data |> filter(country == "DEU"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_den1 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_den2 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_den3 <- lm(data = reg_data |> filter(country == "DNK"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_swe1 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_swe2 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_swe3 <- lm(data = reg_data |> filter(country == "SWE"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_esp1 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_esp2 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_esp3 <- lm(data = reg_data |> filter(country == "ESP"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 mp_nld1 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id)
+               parlgov_id + eu_public_opinion)
 
 mp_nld2 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + time_to_next*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + time_to_next*lag_rrp_polled_voteshare)
 
 mp_nld3 <- lm(data = reg_data |> filter(country == "NLD"),
              prop_euroscepticism ~ as.numeric(year_month) + 
                lag_prop_euroscepticism + 
                time_to_next + time_to_next_ep + vote_share + 
                change_voteshare + lag_rrp_polled_voteshare + cabinet_party +
-               parlgov_id + change_voteshare*lag_rrp_polled_voteshare)
+               parlgov_id + eu_public_opinion + change_voteshare*lag_rrp_polled_voteshare)
 
 stargazer::stargazer(mp_aus1, mp_deu1,mp_den1, mp_swe1, mp_esp1, mp_nld1,
                      omit.labels = c("Party", "Country"),
@@ -957,10 +966,12 @@ stargazer::stargazer(mp_aus1, mp_deu1,mp_den1, mp_swe1, mp_esp1, mp_nld1,
                                            "Party size (vote share)",
                                            "Change in vote share",
                                            "Polled RRP Vote",
-                                           "Party in Government"
+                                           "Party in Government",
+                                          "Pro EU Public Opinion"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 
 stargazer::stargazer(mp_aus2, mp_deu2,mp_den2, mp_swe2, mp_esp2, mp_nld2,
                      omit.labels = c("Party", "Country"),
@@ -975,10 +986,12 @@ stargazer::stargazer(mp_aus2, mp_deu2,mp_den2, mp_swe2, mp_esp2, mp_nld2,
                                            "Change in vote share",
                                            "Polled RRP Vote",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "Time to next election * Polled RRP Vote"
                                            ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001))
 
 stargazer::stargazer(mp_aus3, mp_deu3, mp_den3, mp_swe3, mp_esp3, mp_nld3,
                      omit.labels = c("Party", "Country"),
@@ -993,10 +1006,13 @@ stargazer::stargazer(mp_aus3, mp_deu3, mp_den3, mp_swe3, mp_esp3, mp_nld3,
                                            "Change in vote share",
                                            "Polled RRP Vote",
                                            "Party in Government",
+                                          "Pro EU Public Opinion",
                                           "Polled RRP Vote * Change in vote share"
                                             ),
                      omit = c("parlgov_id", "country"),
-                     omit.stat = c("f", "ser"))
+                     omit.stat = c("f", "ser"),
+                     star.cutoffs = c(0.05, 0.01, 0.001)
+                     )
 
 ```
 
