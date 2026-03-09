@@ -9,21 +9,21 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(lubridate)
 library(readxl)
+library(slider)
+
+
+theme_set(theme_bw() +
+            theme(legend.position = "bottom"))
 
 ```
 
-# Data cleaning
-
-## Model structure and variables
-
-The DV is EU position, measured as share of Eurosceptic sentences aggregated at the party level.
-
-The controls are RRP voteshare, own party vote loss, time to the next parliamentary election, time to the next European election, party size (in terms of vote share), current government participation, a proxy for public support for the EU in the country, a recession dummy variable, and coalition inclusion probabilities.
+# Getting Monthly Data
 
 ## Cleaning LLM-Classified Speeches
 
-The following code is commented out because importing and reading the entire data set is slow and inexpedient once monthly frequencies are calculated.
+The following code is commented out because importing and reading the entire data set only to properly assemble it is slow and inexpedient.
 
 ```{r}
 
@@ -67,9 +67,9 @@ The following code is commented out because importing and reading the entire dat
 #   dplyr::select(-"...1") |>
 #   distinct()
 # 
-# eu_stance <- read_csv("EU_stance_classified_V2.csv") |>
+# eu_stance <- read_csv("Final_Classified_Speeches.csv") |>
 #   mutate(
-#     Stance = as.numeric(Stance),
+#     Stance = as.factor(Stance),
 #     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
 #     month = as.factor(format(date, "%m"))
@@ -78,7 +78,7 @@ The following code is commented out because importing and reading the entire dat
 #          eu_mention = EU_2,
 #          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-"Unnamed: 0") |>
+#   #dplyr::select(-"Unnamed: 0") |>
 #   distinct()
 # 
 # data0 <- eu_mentions |>
@@ -87,43 +87,171 @@ The following code is commented out because importing and reading the entire dat
 #   ) |>
 #   bind_rows(
 #     nonEU_speeches_UK
-#   )
+#   ) |>
+#   left_join(eu_stance)
 # 
-# data_yearly <- data0 |>
-#   left_join(eu_stance) |>
-#   group_by(country, partyfacts_id, year) |> 
-#   summarise(
-#     prop_eu_mention = 100*mean(eu_mention),
-#     prop_euroscepticism = 100*mean(eu_stance, na.rm = TRUE)
-#   ) |> 
-#   ungroup()
-# 
-# write.csv(data_yearly, "data_yearly.csv", row.names = FALSE)
-# 
-# data_monthly_0 <- data0 |>
-#   left_join(eu_stance) |>
-#   group_by(country, partyfacts_id, year_month) |> 
-#   summarise(
-#     prop_eu_mention = 100*mean(eu_mention),
-#     prop_euroscepticism = 100*mean(eu_stance, na.rm = TRUE)
-#   ) |> 
-#   ungroup()
-# 
-# write.csv(data_monthly_0, "data_monthly_0.csv", row.names = FALSE)
-
-data_monthly_0 <- read_csv("data_monthly_0.csv") |>
-  mutate(year_month = as.factor(year_month))
-
+# write.csv(data0, "data0.csv", row.names = FALSE)
 ```
 
-## Cleaning ParlGov and merging with speeches
+
+
+```{r}
+data0 <- read_csv("data0.csv") |>
+  mutate(year_month = as.factor(year_month))
+
+data_individual_positions_year <- data0 |>
+  group_by(country, partyfacts_id, speaker, year) |>
+  summarise(
+    count = n(),
+    count_mention = sum(eu_mention == 1, na.rm = TRUE),
+    count_support = sum(Support == 1, na.rm = TRUE),
+    count_neutral = sum(Neutral == 1, na.rm = TRUE),
+    count_oppose = sum(Opposition == 1, na.rm = TRUE),
+    prop_eu_mention = 100*mean(eu_mention, na.rm = TRUE),
+    prop_support = 100*count_support/count_mention,
+    prop_neutral = 100*count_neutral/count_mention,
+    prop_oppose = 100*count_oppose/count_mention,
+    net_position = prop_support - prop_oppose
+  ) |>
+  ungroup()
+
+data_sd_year <- data_individual_positions_year |>
+  group_by(country, partyfacts_id, year) |>
+  summarise(
+    sd_eu_mention = sd(prop_eu_mention, na.rm = TRUE),
+    sd_position = sd(net_position, na.rm = TRUE)
+  ) |>
+  ungroup()
+
+data_yearly <- data0 |>
+  group_by(country, partyfacts_id, year) |>
+  summarise(
+    count = n(),
+    count_mention = sum(eu_mention == 1, na.rm = TRUE),
+    count_support = sum(Support == 1, na.rm = TRUE),
+    count_neutral = sum(Neutral == 1, na.rm = TRUE),
+    count_oppose = sum(Opposition == 1, na.rm = TRUE),
+    prop_eu_mention = 100*mean(eu_mention, na.rm = TRUE),
+    prop_support = 100*count_support/count_mention,
+    prop_neutral = 100*count_neutral/count_mention,
+    prop_oppose = 100*count_oppose/count_mention,
+    net_position = prop_support - prop_oppose
+  ) |>
+  ungroup() |>
+  left_join(data_sd_year)
+
+#write.csv(data_yearly, "data_yearly.csv", row.names = FALSE)
+```
+
+# Getting Trimester Data
+
+## Cleaning LLM-Classified Speeches
+
+```{r}
+df_trimester <- data0 %>%
+  mutate(
+    year_month_chr = as.character(year_month),
+    ym_date = date,
+    year = year(ym_date),
+    month = month(ym_date),
+    # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+    trimester = ((month - 1) %/% 3) + 1,
+    # a convenient label
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    # make a Date for the first day of the trimester
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
+  ) %>%
+  # 3) aggregate by country, party and trimester
+  group_by(country, partyfacts_id, tri, tri_date) %>%
+  summarise(
+    n_sentences = n(),                            # total sentences in the trimester-cell
+    n_eu = sum(eu_mention == 1, na.rm = TRUE),    # number of EU-mentioning sentences
+    share_eu = ifelse(n_sentences > 0, n_eu / n_sentences, NA_real_),
+    # shares among EU mentions -> use mean on Support/Opposition which are NA for non-eu rows
+    share_support = ifelse(n_eu > 0, mean(Support, na.rm = TRUE), NA_real_),
+    share_opposition = ifelse(n_eu > 0, mean(Opposition, na.rm = TRUE), NA_real_),
+    net_position = ifelse(n_eu > 0, share_support - share_opposition, NA_real_),
+    .groups = "drop"
+  )
+
+# View(df_trimester)
+```
+
+```{r}
+data_individual_positions <- data0 |>
+  mutate(
+    year_month_chr = as.character(year_month),
+    ym_date = date,
+    year = year(ym_date),
+    month = month(ym_date),
+    # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+    trimester = ((month - 1) %/% 3) + 1,
+    # a convenient label
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    # make a Date for the first day of the trimester
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
+  ) |>
+  group_by(country, partyfacts_id, speaker, tri, tri_date) |>
+  summarise(
+    count = n(),
+    count_mention = sum(eu_mention == 1, na.rm = TRUE),
+    count_support = sum(Support == 1, na.rm = TRUE),
+    count_neutral = sum(Neutral == 1, na.rm = TRUE),
+    count_oppose = sum(Opposition == 1, na.rm = TRUE),
+    prop_eu_mention = 100*mean(eu_mention, na.rm = TRUE),
+    prop_support = 100*count_support/count_mention,
+    prop_neutral = 100*count_neutral/count_mention,
+    prop_oppose = 100*count_oppose/count_mention,
+    net_position = prop_support - prop_oppose
+  ) |>
+  ungroup()
+```
 
 ```{r}
 
+data_sd_0 <- data_individual_positions |>
+  group_by(country, partyfacts_id, tri, tri_date) |>
+  summarise(
+    sd_eu_mention_0 = sd(prop_eu_mention, na.rm = TRUE),
+    sd_position_0 = sd(net_position, na.rm = TRUE)
+  ) |>
+  ungroup()
+
+data_sd_1 <- data_individual_positions |>
+  filter(prop_eu_mention > 1) |>
+  group_by(country, partyfacts_id, tri, tri_date) |>
+  summarise(
+    sd_eu_mention_1 = sd(prop_eu_mention, na.rm = TRUE),
+    sd_position_1 = sd(net_position, na.rm = TRUE)
+  ) |>
+  ungroup()
+
+data_sd_5 <- data_individual_positions |>
+  filter(prop_eu_mention > 5) |>
+  group_by(country, partyfacts_id, tri, tri_date) |>
+  summarise(
+    sd_eu_mention_5 = sd(prop_eu_mention, na.rm = TRUE),
+    sd_position_5 = sd(net_position, na.rm = TRUE)
+  ) |>
+  ungroup()
+
+
+df_trimester_0 <- df_trimester |>
+  left_join(data_sd_0, by = c("country", "partyfacts_id", "tri", "tri_date")) |>
+  left_join(data_sd_1, by = c("country", "partyfacts_id", "tri", "tri_date")) |>
+  left_join(data_sd_5, by = c("country", "partyfacts_id", "tri", "tri_date"))
+
+```
+
+## Cleaning ParlGov and Merging
+
+```{r}
 ## Getting parlgov and partyfacts codes:
 
 partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
-  filter((partyfacts_id %in% unique(data_monthly_0$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
+  filter((partyfacts_id %in% unique(df_trimester_0$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
            dataset_key == "parlgov" &
            year_last >= 1998) |>
   rename(parlgov_id = dataset_party_id,
@@ -131,7 +259,7 @@ partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
 
 ## Merging partyfacts and parlgov codes with speeches
 
-data_monthly_1 <- data_monthly_0 |>
+df_trimester_1 <- df_trimester_0 |>
   dplyr::select(country, partyfacts_id) |>
   distinct() |>
   mutate(partyfacts_id = case_when(partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
@@ -144,7 +272,7 @@ data_monthly_1 <- data_monthly_0 |>
                 name,
                 name_english) |>
   full_join(
-    data_monthly_0 |>
+    df_trimester_0 |>
       mutate(
         partyfacts_id = case_when(partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
                                   .default = partyfacts_id)
@@ -153,8 +281,10 @@ data_monthly_1 <- data_monthly_0 |>
   ) |>
   mutate(parlgov_id = as.numeric(parlgov_id))
 
-nrow(data_monthly_1) == nrow(data_monthly_0) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
+nrow(df_trimester_1) == nrow(df_trimester_0) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
+```
 
+```{r}
 ## Getting election results from parlgov
 
 parlgov_elections <- read_csv("view_election.csv") |>
@@ -168,15 +298,16 @@ parlgov_elections <- read_csv("view_election.csv") |>
     )
   ) |>
   dplyr::select(c(country, election_type, election_date, 
-                  vote_share, party_name_short, party_name, 
+                  vote_share, seats, seats_total, party_name_short, party_name, 
                   party_name_english, party_id)) |>
   bind_rows(read_csv("view_election.csv") |>           ## ParlGov for some reason disagreggates between CDU and CSU 
                                                        ## in terms of election results.
               filter(party_id %in% c(808, 1180) & election_date > as.Date("1990-01-01")) |> 
-              dplyr::select(election_type, election_date, vote_share) |>
+              dplyr::select(election_type, election_date, vote_share, seats) |>
               group_by(election_type, election_date) |>
               mutate(
-                vote_share = sum(vote_share, na.rm = TRUE)
+                vote_share = sum(vote_share, na.rm = TRUE),
+                seats = sum(seats, na.rm = TRUE)
                 ) |> 
               distinct() |> 
               bind_cols(read_csv("view_party.csv") |>
@@ -223,9 +354,11 @@ parlgov_elections <- election_dates |>
   left_join(
     rrp_results |> 
       group_by(election_date, election_type, country) |>
-      mutate(rrp_voteshare = sum(vote_share, na.rm = TRUE)) |>
+      mutate(rrp_voteshare = sum(vote_share, na.rm = TRUE),
+             rrp_seats = sum(seats, na.rm = TRUE),
+             rrp_seatshare = (rrp_seats*100)/seats_total) |>
       ungroup() |> 
-      dplyr:::select(country, election_type, election_date, rrp_voteshare) |>
+      dplyr:::select(country, election_type, election_date, rrp_voteshare, rrp_seats, rrp_seatshare) |>
       distinct(),
     by = c("country", "election_type", "election_date")
     ) |>
@@ -233,6 +366,14 @@ parlgov_elections <- election_dates |>
         rrp_voteshare = case_when(
           is.na(rrp_voteshare) ~ 0,
           .default = rrp_voteshare
+        ),
+        rrp_seats = case_when(
+          is.na(rrp_seats) ~ 0,
+          .default = rrp_seats
+        ),
+        rrp_seatshare = case_when(
+          is.na(rrp_seatshare) ~ 0,
+          .default = rrp_seatshare
         )
       ) |>
       group_by(country) |>
@@ -242,11 +383,13 @@ parlgov_elections <- election_dates |>
 parlgov_elections <- parlgov_elections |>
   left_join(parlgov_elections |> 
               filter(election_type == "parliament") |> 
-              dplyr::select(country, election_year, rrp_voteshare) |> 
+              dplyr::select(country, election_year, rrp_voteshare, rrp_seats, rrp_seatshare) |> 
               distinct() |> 
               group_by(country) |> 
               mutate(
-                rrp_lag = dplyr::lag(rrp_voteshare, order_by = election_year), 
+                rrp_lag = dplyr::lag(rrp_voteshare, order_by = election_year),
+                rrp_seat_lag = dplyr::lag(rrp_seats, order_by = election_year),
+                rrp_seatshare_lag = dplyr::lag(rrp_seatshare, order_by = election_year),
                 rrp_lag2 = dplyr::lag(rrp_voteshare, order_by = election_year, 2)
                 )
             )
@@ -269,94 +412,91 @@ parlgov_cab <- read_csv("view_cabinet.csv") |>
 
 ## Calculating time to next election
 
-data_election_dates <- data_monthly_1 |>
-  dplyr::select(country, year_month) |>
+data_election_dates <- df_trimester_1 |>
+  dplyr::select(country, tri_date) |>
   distinct() |> # I now want to match the dates to the next closest election:
   left_join(election_dates |> 
               filter(election_type == "parliament") |>
-              dplyr::select(country, election_year_month), 
+              dplyr::select(country, election_date), 
             by = "country") |>
   mutate(
-    time_from_last = round(as.numeric(difftime(as.Date(paste(year_month, "-01", sep = "")),
-                                             as.Date(paste(election_year_month, "-01", sep = "")),
+    time_from_last = round(as.numeric(difftime(tri_date,
+                                             election_date,
                                              units = "days"))/30)
     ) |>
   filter(time_from_last >= 0) |> 
-  group_by(country, year_month) |>
+  group_by(country, tri_date) |>
   filter(time_from_last == min(time_from_last)) |>
   ungroup() |>
-  rename(last_election_year_month = election_year_month) |>
+  rename(last_election_date = election_date) |>
   #dplyr::select(-time_to_last) |>
   left_join(
-    data_monthly_1 |>
-      dplyr::select(country, year_month) |>
+    df_trimester_1 |>
+      dplyr::select(country, tri_date) |>
       distinct() |> # I now want to match the dates to the next closest election:
       left_join(election_dates |> 
                   filter(election_type == "parliament") |>
-                  dplyr::select(country, election_year_month), 
+                  dplyr::select(country, election_date), 
                 by = "country") |>
       mutate(
-        time_to_next = round(as.numeric(difftime(as.Date(paste(election_year_month, "-01", sep = "")),
-                                                 as.Date(paste(year_month, "-01", sep = "")),
+        time_to_next = round(as.numeric(difftime(election_date,
+                                             tri_date,
                                                  units = "days"))/30)
         ) |>
       filter(time_to_next >= 0) |> 
-      group_by(country, year_month) |>
+      group_by(country, tri_date) |>
       filter(time_to_next == min(time_to_next)) |>
       ungroup() |>
-      rename(next_election_year_month = election_year_month)) |>
+      rename(next_election_date = election_date)) |>
   left_join(election_dates |> 
               filter(election_type == "ep") |>
-              rename(election_year_month_ep = election_year_month) |>
-              dplyr::select(country, election_year_month_ep) |>
+              rename(election_date_ep = election_date) |>
+              dplyr::select(country, election_date_ep) |>
               bind_rows(tibble(country = c("NLD", "GBR"), 
-                               election_year_month_ep = c("2024-06", "2024-06"))), 
+                               election_date_ep = c(as.Date("2024-06-06"), as.Date("2024-06-06")))), 
             by = "country") |> 
   mutate(
-    time_to_next_ep = round(as.numeric(difftime(as.Date(paste(election_year_month_ep, "-01", sep = "")),
-                                                as.Date(paste(year_month, "-01", sep = "")),
+    time_to_next_ep = round(as.numeric(difftime(election_date_ep,
+                                                tri_date,
                                                 units = "days")
                                   ) / 30)
   ) |> 
   filter(time_to_next_ep >= 0) |>
-  group_by(country, year_month) |>
+  group_by(country, tri_date) |>
   filter(time_to_next_ep == min(time_to_next_ep)) |>
   ungroup() |>
   mutate(
     time_to_next_ep = case_when(
-      country == "GBR" & election_year_month_ep == "2024-06" ~ NA,
+      country == "GBR" & election_date_ep == as.Date("2024-06-06") ~ NA,
       .default = time_to_next_ep
     ),
     election_year_month_ep = case_when(
-      country == "GBR" & election_year_month_ep == "2024-06" ~ NA,
-      .default = election_year_month_ep
+      country == "GBR" & election_date_ep == as.Date("2024-06-06") ~ NA,
+      .default = election_date_ep
     ),
   ) |>
-  rename(next_election_year_month_ep = election_year_month_ep)
+  rename(next_election_date_ep = election_date_ep)
 
 ## Doing the same for cabinets (but we're only interested in keeping the current cabinet)
 
 cab_dates <- parlgov_cab |>
   dplyr::select(country, start_date, cabinet_id) |>
-  mutate(
-    start_year_month = as.factor(format(start_date, "%Y-%m"))
-  ) |>
   distinct()
 
-data_cab_dates <- data_monthly_1 |>
-  dplyr::select(country, year_month) |>
+data_cab_dates <- df_trimester_1 |>
+  dplyr::select(country, tri_date) |>
   distinct() |> # I now want to match the dates to the next closest cabinet:
   left_join(cab_dates |> 
-              dplyr::select(country, start_year_month, cabinet_id), 
+              dplyr::select(country, start_date, cabinet_id), 
             by = "country") |>
   mutate(
-    time_to_next_cab = round(as.numeric(difftime(as.Date(paste(start_year_month, "-01", sep = "")),
-                                                  as.Date(paste(year_month, "-01", sep = "")),
+    time_to_next_cab = round(as.numeric(difftime(start_date,
+                                                  tri_date,
                                                   units = "days")
                                     )/30)
   ) |> 
   filter(time_to_next_cab <= 0) |> # We only want cabinets whose start date is in the past
-  group_by(country, year_month) |>
+  group_by(country, tri_date) |>
   filter(time_to_next_cab == max(time_to_next_cab)) |> # But for any given date we just want to closest past cabinet
   ungroup() |> 
   dplyr::select(-time_to_next_cab) # The time difference variable isn't of interest
@@ -364,7 +504,7 @@ data_cab_dates <- data_monthly_1 |>
 ## Now to get a single data_dates dataframe:
 
 data_dates <- data_election_dates |>
-  full_join(data_cab_dates, by = c("country", "year_month"))
+  full_join(data_cab_dates, by = c("country", "tri_date"))
 
 ## Merging speeches with election results
 
@@ -372,35 +512,34 @@ vote_changes <- parlgov_elections |>  # Calculating change in voteshare
               filter(election_type == "parliament") |>
               dplyr::select(country, election_date, 
                             party_name_short, vote_share, 
-                            party_id, rrp_voteshare, rrp_lag, rrp_lag2) |>
+                            party_id, rrp_voteshare, rrp_lag, rrp_lag2, rrp_seats, rrp_seat_lag, rrp_seatshare, rrp_seatshare_lag) |>
               group_by(party_id) |>
               mutate(
                 change_voteshare = vote_share - lag(vote_share, order_by = election_date)
                 ) |>
               ungroup() |>
-              mutate(last_election_year_month = as.factor(format(election_date, "%Y-%m"))) |>
+              mutate(last_election_date = election_date) |>
               rename(parlgov_id = party_id)
 
-data_monthly <- data_monthly_1 |>
+data_trimester <- df_trimester_1 |>
   left_join(data_dates, 
-            by = c("country", "year_month")) |> 
+            by = c("country", "tri_date")) |> 
   left_join(vote_changes,
-            by = c("country", "parlgov_id", "last_election_year_month")
+            by = c("country", "parlgov_id", "last_election_date")
             ) |>
   left_join(parlgov_cab |>
-              mutate(start_year_month = as.factor(format(start_date, "%Y-%m"))) |>
               rename(parlgov_id = party_id) |>
-              dplyr::select(country, start_year_month, cabinet_id, cabinet_name, cabinet_party, parlgov_id),
-            by = c("country", "start_year_month", "cabinet_id", "parlgov_id")) |>
-  mutate(year_month = as.factor(year_month))
+              dplyr::select(country, start_date, cabinet_id, cabinet_name, cabinet_party, parlgov_id),
+            by = c("country", "start_date", "cabinet_id", "parlgov_id"))
 
-nrow(data_monthly) == nrow(data_monthly_1)
+nrow(data_trimester) == nrow(df_trimester_1)
 
-#write.csv(data_monthly, "data_monthly.csv", row.names = FALSE)
+write.csv(data_trimester, "data_trimester.csv", row.names = FALSE)
+
 
 ```
 
-## Cleaning Eurobarometer data
+## Cleaning Eurobarometer Data
 
 ```{r}
 
@@ -489,71 +628,22 @@ eb_final <- eb98_2021 |>
     std_feel = as.numeric(FEEL)/2
     )
 
-nrow(eb_final) == nrow(eb98_2021)
-
-eb_final |>
-  arrange(nation2, date) |>
-  filter(!is.na(mem)) |>
-  group_by(date, nation2, mem) |>
-  summarise(
-    count = n()
+eb_means_tri <- eb_final |>
+  #mutate(tri_date = as.Date(paste(year_month, "-01", sep = ""))) |>
+  mutate(
+    year_month_chr = as.character(year_month),
+    ym_date = date,
+    year = year(ym_date),
+    month = month(ym_date),
+    # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+    trimester = ((month - 1) %/% 3) + 1,
+    # a convenient label
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    # make a Date for the first day of the trimester
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
   ) |>
-  ungroup() |> 
-  ggplot(aes(fill = mem, y = count, x = date)) +
-  geom_bar(position = "fill", stat = "identity") +
-  facet_wrap(~ nation2) +
-  scale_fill_manual(values = c("Good" = "green4", "Neither" = "gold", "Bad" = "red3"), name = "") +
-  labs(x = "Year",
-       y = "Proportion of responses",
-       title = "Membership perception by country",
-       subtitle = "Eurobarometer data")
-
-eb_final |>
-  arrange(nation2, date) |>
-  filter(!is.na(benefit)) |>
-  group_by(date, nation2, benefit) |>
-  summarise(
-    count = n()
-  ) |>
-  ungroup() |> 
-  ggplot(aes(fill = benefit, y = count, x = date)) +
-  geom_bar(position = "fill", stat = "identity") +
-  facet_wrap(~ nation2) +
-  scale_fill_manual(values = c("Benefited" = "green4", "Not benefited" = "red3"), name = "") +
-  labs(x = "Year",
-       y = "Proportion of responses",
-       title = "Perception of membership benefit by country",
-       subtitle = "Eurobarometer data")
-
-eb_final |>
-  arrange(nation2, date) |>
-  filter(!is.na(trust_ec)) |>
-  group_by(date, nation2, trust_ec) |>
-  summarise(
-    count = n()
-  ) |>
-  ungroup() |> 
-  ggplot(aes(fill = trust_ec, y = count, x = date)) +
-  geom_bar(position = "fill", stat = "identity") +
-  facet_wrap(~ nation2) +
-  scale_fill_manual(values = c("Trust" = "green4", "No Trust" = "red3"), name = "") +
-  labs(x = "Year",
-       y = "Proportion of responses",
-       title = "Trust in the European Commission by country",
-       subtitle = "Eurobarometer data")
-
-
-
-# Calculate the cronbach's alpha for the membership, 
-psych::alpha(eb_final |>
-               dplyr::select(std_mem, std_ben, std_trust_ec, 
-                             std_trust_ep, std_sat_deu, std_feel),
-  check.keys = T)
-
-## Alpha of 0.81
-
-eb_means <- eb_final |>
-  group_by(nation2, year_month) |>
+  group_by(nation2, tri_date, tri) |>
   summarise(
     std_mem = mean(std_mem, na.rm = TRUE),
     std_ben = mean(std_ben, na.rm = TRUE),
@@ -578,40 +668,41 @@ eb_means <- eb_final |>
   )
 
 
-eu_public_opinion_0 <- rowMeans(eb_means |> 
+eu_public_opinion_0 <- rowMeans(eb_means_tri |> 
                                   dplyr::select(std_mem, std_ben, 
                                                 std_trust_ep, std_trust_ec, 
                                                 std_sat_deu, std_feel), na.rm = TRUE)
 
 eu_public_opinion_0[is.nan(eu_public_opinion_0)] <- NA_real_ # Replace NaN with NA
 
-eb_means <- eb_means |>
+eb_tri <- eb_means_tri |>
   mutate(eu_public_opinion_0 = eu_public_opinion_0) |>
-  dplyr::select(nation2, year_month, std_mem, std_trust_ec, std_sat_deu, eu_public_opinion_0) |>
-  rename(country = nation2)
-
-eb_months <- data_monthly |> 
-  dplyr::select(country, year_month) |>
-  distinct() |>
-  left_join(eb_means) |>
-  mutate(date = as.Date(paste(year_month, "-01", sep = ""))) |> 
-  arrange(country, year_month) |>
+  dplyr::select(nation2, tri, tri_date, std_mem, std_trust_ec, std_sat_deu, eu_public_opinion_0) |>
+  rename(country = nation2) |>
+  full_join(data_trimester |> 
+              dplyr::select(country, tri, tri_date) |> 
+              distinct()) |>
+  arrange(country, tri_date) |>
   group_by(country) |>
   mutate(
     eu_public_opinion = zoo::na.locf0(eu_public_opinion_0, fromLast = FALSE),
+    lag_eu_public_opinion = dplyr::lag(eu_public_opinion, order_by = tri_date),
+    lag_eu_public_opinion_2 = dplyr::lag(eu_public_opinion, n = 2, order_by = tri_date),
+    lag_eu_public_opinion_3 = dplyr::lag(eu_public_opinion, n = 3, order_by = tri_date),
     std_mem = zoo::na.locf0(std_mem, fromLast = FALSE),
     std_trust_ec = zoo::na.locf0(std_trust_ec, fromLast = FALSE),
     std_sat_deu = zoo::na.locf0(std_sat_deu, fromLast = FALSE)
   )
 
-eb_months |>
+eb_tri |>
   #mutate(date = as.Date(paste(year_month, "-01", sep = ""))) |>
   #filter(!is.na(eu_public_opinion)) |>
-  arrange(country, date) |>
-  ggplot(aes(x = date, y = eu_public_opinion)) +
+  arrange(country, tri_date) |>
+  ggplot(aes(x = tri_date, y = eu_public_opinion, group = country)) +
   geom_point() +
   geom_path() +
-  geom_point(aes(x = date, y = eu_public_opinion_0), color = "red", alpha = 0.5) +
+  geom_point(aes(x = tri_date, y = eu_public_opinion), color = "red", alpha = 0.5) +
+  #geom_point(aes(x = tri_date, y = lag_eu_public_opinion), color = "blue", alpha = 0.5) +
   facet_wrap(~ country) +
   labs(x = "Year",
        y = "Public opinion on the EU",
@@ -620,73 +711,7 @@ eb_months |>
 
 ```
 
-## Cleaning Coalition Inclusion Probabilities
-
-```{r}
-
-cip <- read.csv("CIP_dynamic_Austria_1995-2019.csv", sep = ";") |> 
-  mutate(country = "AUS",
-         date = str_replace_all(date, "\\.", "-"),
-         date = as.Date(date, "%d-%m-%Y"),
-         year_month = as.factor(format(date, "%Y-%m"))
-         ) |>
-  filter(is.na(excluding_parlgov_id)) |>
-  dplyr::select(-c(excluding_parlgov_id, excluding)) |>
-  bind_rows(
-    read.csv("CIP_dynamic_Spain_1980-2019.csv", sep = ";") |> 
-      mutate(country = "ESP",
-             date = str_replace_all(date, "\\.", "-"),
-             date = as.Date(date, "%d-%m-%Y"),
-             year_month = as.factor(format(date, "%Y-%m"))
-             ) |>
-      filter(is.na(excluding_parlgov_id)) |>
-      dplyr::select(-c(excluding_parlgov_id, excluding))
-  ) |> 
-  bind_rows(
-    read.csv("CIP_dynamic_Sweden_1970-2019.csv", sep = ";") |> 
-      mutate(country = "SWE",
-             date = str_replace_all(date, "\\.", "-"),
-             date = as.Date(date, "%d-%m-%Y"),
-             year_month = as.factor(format(date, "%Y-%m"))
-             ) |>
-      filter(is.na(excluding_parlgov_id)) |>
-      dplyr::select(-c(excluding_parlgov_id, excluding))
-  ) |> 
-  bind_rows(
-    read.csv("CIP_dynamic_Denmark_1970-2019.csv", sep = ";") |> 
-      mutate(country = "DNK",
-             date = str_replace_all(date, "\\.", "-"),
-             date = as.Date(date, "%d-%m-%Y"),
-             year_month = as.factor(format(date, "%Y-%m"))
-             ) |>
-      filter(is.na(excluding_parlgov_id)) |>
-      dplyr::select(-c(excluding_parlgov_id, excluding))
-  ) |> 
-  bind_rows(
-    read.csv("CIP_dynamic_Germany_1970-2019.csv", sep = ";") |> 
-      mutate(country = "DEU",
-             date = str_replace_all(date, "\\.", "-"),
-             date = as.Date(date, "%d-%m-%Y"),
-             year_month = as.factor(format(date, "%Y-%m"))
-             ) |>
-      filter(is.na(excluding_parlgov_id)) |>
-      dplyr::select(-c(excluding_parlgov_id, excluding))
-  ) |> 
-  bind_rows(
-    read.csv("CIP_dynamic_Netherlands_1970-2019.csv", sep = ";") |> 
-      mutate(country = "NLD",
-             date = str_replace_all(date, "\\.", "-"),
-             date = as.Date(date, "%d-%m-%Y"),
-             year_month = as.factor(format(date, "%Y-%m"))
-             ) |>
-      filter(is.na(excluding_parlgov_id)) |>
-      dplyr::select(-c(excluding_parlgov_id, excluding))
-  ) |> 
-  dplyr::select(-c(X, germany))
-
-```
-
-## Cleaning opinion polls
+## Cleaning Polling Data
 
 ```{r}
 
@@ -696,9 +721,17 @@ polls_aus <- read_excel("austria_monthly.xlsx") |>
 colnames(polls_aus)[4:5] <- c("FPO", "BZO")
 
 polls_aus <- polls_aus |> 
-  mutate(month = sprintf("%02d" , month),
-         year_month = as.factor(paste(year, month, sep = "-")),
-         country = "AUS",
+  mutate(date = as.Date(survey_date),
+         year = year(date),
+         month = month(date),
+        # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+        trimester = ((month - 1) %/% 3) + 1,
+        # a convenient label
+        tri = paste0(year, "-T", trimester),
+        tri_month = (trimester - 1) * 3 + 1,
+        # make a Date for the first day of the trimester
+        tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
+        country = "AUS",
          BZO = case_when(
            is.na(BZO) ~ 0,
            TRUE ~ BZO
@@ -708,17 +741,25 @@ polls_aus <- polls_aus |>
            TRUE ~ FPO
          ),
          rrp_sum = FPO + BZO) |>
-  group_by(year_month) |>
+  group_by(tri_date) |>
   mutate(
     rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
   ) |>
-  dplyr::select(country, year_month, rrp_voteshare) |>
+  dplyr::select(country, tri, tri_date, rrp_voteshare) |>
   distinct()
 
 polls_swe <- read_excel("sweden_monthly.xlsx") |>
   dplyr::select(survey_date, year, month, NyD, SD) |> 
-  mutate(month = sprintf("%02d" , month),
-         year_month = as.factor(paste(year, month, sep = "-")),
+  mutate(date = as.Date(survey_date),
+         year = year(date),
+         month = month(date),
+        # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+        trimester = ((month - 1) %/% 3) + 1,
+        # a convenient label
+        tri = paste0(year, "-T", trimester),
+        tri_month = (trimester - 1) * 3 + 1,
+        # make a Date for the first day of the trimester
+        tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
          country = "SWE",
          NyD = case_when(
            is.na(NyD) ~ 0,
@@ -729,17 +770,25 @@ polls_swe <- read_excel("sweden_monthly.xlsx") |>
            TRUE ~ SD
          ),
          rrp_sum = NyD + SD) |>
-  group_by(year_month) |>
+  group_by(tri_date) |>
   mutate(
     rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
   ) |>
-  dplyr::select(country, year_month, rrp_voteshare) |>
+  dplyr::select(country, tri, tri_date, rrp_voteshare) |>
   distinct()
 
 polls_dnk <- read_excel("denmark_monthly.xlsx") |>
   dplyr::select(survey_date, year, month, DF, HardLine) |> 
-  mutate(month = sprintf("%02d" , month),
-         year_month = as.factor(paste(year, month, sep = "-")),
+  mutate(date = as.Date(survey_date),
+         year = year(date),
+         month = month(date),
+        # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+        trimester = ((month - 1) %/% 3) + 1,
+        # a convenient label
+        tri = paste0(year, "-T", trimester),
+        tri_month = (trimester - 1) * 3 + 1,
+        # make a Date for the first day of the trimester
+        tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
          country = "DNK",
          DF = case_when(
            is.na(DF) ~ 0,
@@ -750,33 +799,49 @@ polls_dnk <- read_excel("denmark_monthly.xlsx") |>
            TRUE ~ HardLine
          ),
          rrp_sum = DF + HardLine) |>
-  group_by(year_month) |>
+  group_by(tri_date) |>
   mutate(
     rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
   ) |>
-  dplyr::select(country, year_month, rrp_voteshare) |>
+  dplyr::select(country, tri, tri_date, rrp_voteshare) |>
   distinct()
 
 polls_deu <- read_excel("germany_monthly.xlsx", col_types = c("text", "numeric", "date", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "text", "text", "numeric")) |>
   dplyr::select(survey_date, year, month, AfD) |> 
-  mutate(month = sprintf("%02d" , month),
-         year_month = as.factor(paste(year, month, sep = "-")),
+  mutate(date = as.Date(survey_date),
+         year = year(date),
+         month = month(date),
+        # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+        trimester = ((month - 1) %/% 3) + 1,
+        # a convenient label
+        tri = paste0(year, "-T", trimester),
+        tri_month = (trimester - 1) * 3 + 1,
+        # make a Date for the first day of the trimester
+        tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
          country = "DEU",
          AfD = case_when(
            is.na(AfD) ~ 0,
            TRUE ~ AfD
          )) |>
-  group_by(year_month) |>
+  group_by(tri_date) |>
   mutate(
     rrp_voteshare = mean(AfD, na.rm = TRUE)
   ) |>
-  dplyr::select(country, year_month, rrp_voteshare) |>
+  dplyr::select(country, tri, tri_date, rrp_voteshare) |>
   distinct()
 
 polls_nld <- read_excel("netherlands_monthly.xlsx", col_types = c(rep("guess", 5), rep("numeric", 29), rep("guess", 3))) |>
   dplyr::select(survey_date, year, month, CD, CP, LPF, LN, PVV, FvD) |> 
-  mutate(month = sprintf("%02d" , month),
-         year_month = as.factor(paste(year, month, sep = "-")),
+  mutate(date = as.Date(survey_date),
+         year = year(date),
+         month = month(date),
+        # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+        trimester = ((month - 1) %/% 3) + 1,
+        # a convenient label
+        tri = paste0(year, "-T", trimester),
+        tri_month = (trimester - 1) * 3 + 1,
+        # make a Date for the first day of the trimester
+        tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
          country = "NLD",
          CD = case_when(
            is.na(CD) ~ 0,
@@ -804,51 +869,151 @@ polls_nld <- read_excel("netherlands_monthly.xlsx", col_types = c(rep("guess", 5
          ),
          rrp_sum = CD + CP + LPF + LN + PVV + FvD
          ) |>
-  group_by(year_month) |>
+  group_by(tri_date) |>
   mutate(
     rrp_voteshare = mean(rrp_sum, na.rm = TRUE)
   ) |>
-  dplyr::select(country, year_month, rrp_voteshare) |>
+  dplyr::select(country, tri, tri_date, rrp_voteshare) |>
   distinct()
 
 polls_esp <- read_excel("spain_monthly.xlsx", col_types = c(rep("guess", 38), "numeric", rep("guess", 8))) |>
   dplyr::select(survey_date, year, month, VOX) |> 
-  mutate(month = sprintf("%02d" , month),
-    year_month = as.factor(paste(year, month, sep = "-")),
+  mutate(date = as.Date(survey_date),
+         year = year(date),
+         month = month(date),
+        # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+        trimester = ((month - 1) %/% 3) + 1,
+        # a convenient label
+        tri = paste0(year, "-T", trimester),
+        tri_month = (trimester - 1) * 3 + 1,
+        # make a Date for the first day of the trimester
+        tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
          country = "ESP",
          VOX = case_when(
            is.na(VOX) ~ 0,
            TRUE ~ VOX
          )) |>
-  group_by(year_month) |>
+  group_by(tri_date) |>
   mutate(
     rrp_voteshare = mean(VOX, na.rm = TRUE)
   ) |>
-  dplyr::select(country, year_month, rrp_voteshare) |>
+  dplyr::select(country, tri, tri_date, rrp_voteshare) |>
+  distinct()
+
+polls_uk <- read_excel("uk_polling_data.xlsx") |> unique() |>
+  pivot_wider(names_from = Party, values_from = Polling) |>
+  mutate(date = as.Date(Date),
+         year = year(date),
+         month = month(date),
+         trimester = ((month - 1) %/% 3) + 1,
+         tri = paste0(year, "_T", trimester),
+         tri_month = (trimester - 1)*3 + 1,
+         tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
+         country = "GBR",
+         `UKIP/Reform` = case_when(
+           is.na(`UKIP/Reform`) ~ 0,
+           TRUE ~ `UKIP/Reform`
+         ),
+         BNP = case_when(
+           is.na(BNP) ~ 0,
+           TRUE ~ BNP
+         ),
+         `Brexit Party` = case_when(
+           is.na(`Brexit Party`) ~ 0,
+           TRUE ~ `Brexit Party`
+         ),
+         rrp_sum = `UKIP/Reform` + BNP + `Brexit Party`) |>
+  group_by(tri_date) |>
+  mutate(
+    rrp_voteshare = mean(rrp_sum, na.rm = TRUE)) |>
+    dplyr::select(country, tri, tri_date, rrp_voteshare) |>
   distinct()
 
 
-polls <- bind_rows(polls_aus, polls_swe, polls_dnk, polls_deu, polls_nld, polls_esp) |>
+
+
+polls_tri <- bind_rows(polls_aus, polls_swe, polls_dnk, polls_deu, polls_nld, polls_esp, polls_uk) |>
               rename(rrp_polled_voteshare = rrp_voteshare) |>
-  right_join(data_monthly |>
-          dplyr::select(country, year_month) |>
-          distinct(),
-        by = c("country", "year_month")) |>
+  full_join(data_trimester |> 
+              dplyr::select(country, tri, tri_date) |> 
+              distinct(),
+        by = c("country", "tri", "tri_date")) |>
+  arrange(country, tri_date) |>
   group_by(country) |>
-  mutate(
-    lag_rrp_polled_voteshare = lag(rrp_polled_voteshare, order_by = year_month)
+  mutate(rrp_polled_voteshare = zoo::na.locf0(rrp_polled_voteshare, fromLast = FALSE),
+    rrp_polled_voteshare_moving_avg_3 = slider::slide_index_dbl(
+      .x = rrp_polled_voteshare,
+      .i = tri_date,
+      mean,
+      .before = 1,
+      .after = 1,
+      .complete = FALSE),
+    rrp_polled_voteshare_moving_avg_5 = slider::slide_index_dbl(
+      .x = rrp_polled_voteshare,
+      .i = tri_date,
+      mean,
+      .before = 2,
+      .after = 2,
+      .complete = FALSE),
+    lag_rrp_polled_voteshare = dplyr::lag(rrp_polled_voteshare, order_by = tri_date),
+    lag_rrp_polled_voteshare2 = dplyr::lag(rrp_polled_voteshare, n = 2, order_by = tri_date),
+    lag_rrp_polled_voteshare_moving_avg_3 = lag(rrp_polled_voteshare_moving_avg_3, n = 3, order_by = tri_date),
+    lag_rrp_polled_voteshare_moving_avg_5 = lag(rrp_polled_voteshare_moving_avg_5, n = 5, order_by = tri_date)
   ) |>
   ungroup()
 
+```
+
+## Cleaning Lehmann (2023) on EU events
+
+```{r}
+
+l_data <- haven::read_dta("sj-dta-2-eup-10.1177_14651165221143962.dta") |>
+  filter(country %in% c(1, 11, 7, 26, 28, 20, 27)) |>
+  mutate(
+    country = case_when(
+      country == 1 ~ "AUS",
+      country == 11 ~ "DEU",
+      country == 7 ~ "DNK",
+      country == 26 ~ "ESP",
+      country == 28 ~ "GBR",
+      country == 20 ~ "NLD",
+      country == 27 ~ "SWE"
+    ),
+    trimester = ((month - 1) %/% 3) + 1,
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
+  ) |>
+  dplyr::select(
+    country, tri, tri_date, 
+    treaty, #                 0 until the Lisbon Treaty entered into force, 1 afterwards
+    emu_inv, #                EMU integration: 3 = membership in Fiscal Compact, Six-Pack, 
+             #                and Eurozone, 0 = no involvement
+    directives, #             Moving average of EU directives
+    prop_leg, #               Proposed EU legislation
+    treaty_neg, #             Lisbon treaty ratification: 1 in the month of ratification, 
+                #             0.5 in the month before and after.
+    emu_neg, #                EMU ratification: idem
+    referendum, #             Domestic EU referendum
+    referendum_other, #       EU referendum elsewhere
+    council_pres, #           Council presidency: 1 if country holds the Presidency of the 
+    #                         Council of the EU
+    summit, #                 EU/Euro Summit: 1 in the month of the summit, 
+    #                         0.5 a month before and after
+    comm_app, #               Commission appointment: 1 in the month the EC President is 
+    #                         confirmed and until the entire commission is inaugurated
+    
+  )
 
 
 ```
 
-# Bringing it all together
+## Bringing it all together
 
 ```{r}
 
-reg_data <- data_monthly |>
+reg_data_tri <- data_trimester |>
   filter(parlgov_id %in% c(1013, 973, ## OVP and SPO
                            558, 1727, ## SPD and CDU
                            1629, 1605, ## Danish SDs and Venstre
@@ -858,17 +1023,45 @@ reg_data <- data_monthly |>
                            657, 904 ## SAP and Moderates
                            )) |>
   dplyr::select(country, parlgov_id, name_short, name, name_english, 
-                year_month, prop_eu_mention, prop_euroscepticism, 
+                tri, tri_date,
+                n_sentences, n_eu, share_eu, share_support, share_opposition, net_position,
+                sd_position_0, sd_position_1, sd_position_5,
                 time_from_last, time_to_next, time_to_next_ep, vote_share, 
-                rrp_voteshare, rrp_lag, rrp_lag2, change_voteshare, cabinet_party) |>
+                rrp_voteshare, rrp_lag, rrp_lag2, rrp_seats, rrp_seat_lag, rrp_seatshare, rrp_seatshare_lag,
+                change_voteshare, cabinet_party) |>
+  rename(count = n_sentences,
+         eu_count = n_eu,
+         prop_eu_mention = share_eu,
+         prop_support = share_support,
+         prop_oppose = share_opposition) |>
+  mutate(
+    date_numeric = as.numeric(tri_date),
+    rrp_in_parliament = case_when(
+      rrp_seats > 0 ~ 1,
+      rrp_seats == 0 ~ 0,
+      .default = NA
+    ),
+    log_net_position = log(net_position + 0.1),
+    log_prop_support = log(prop_support + 0.01),
+    log_prop_eu_mention = log(prop_eu_mention + 0.01)
+  ) |>
   distinct() |>
   group_by(country, name_short) |>
   mutate(
-    lag__prop_eu_mention = dplyr::lag(prop_eu_mention, order_by = year_month),
-    change_eu_mention = prop_eu_mention - lag__prop_eu_mention,
+    lag_prop_eu_mention = dplyr::lag(prop_eu_mention, order_by = tri_date),
+    lag_log_prop_eu_mention = dplyr::lag(log_prop_eu_mention, order_by = tri_date),
+    change_eu_mention = prop_eu_mention - lag_prop_eu_mention,
     
-    lag_prop_euroscepticism = dplyr::lag(prop_euroscepticism, order_by = year_month),
-    change_euroscepticism = prop_euroscepticism - lag_prop_euroscepticism
+    lag_net_position = dplyr::lag(net_position, order_by = tri_date),
+    lag_log_net_position = dplyr::lag(log_net_position, order_by = tri_date),
+    change_position = net_position - lag_net_position,
+    
+    lag_prop_support = dplyr::lag(prop_support, order_by = tri_date),
+    lag_log_prop_support = dplyr::lag(log_prop_support, order_by = tri_date),
+    change_support = prop_support - lag_prop_support,
+    
+    lag_prop_oppose = dplyr::lag(prop_oppose, order_by = tri_date),
+    change_oppose = prop_oppose - lag_prop_oppose
   ) |>
   ungroup() |>
   left_join(read_csv("view_party.csv") |>
@@ -895,16 +1088,18 @@ reg_data <- data_monthly |>
       .default = NA
     ) |> as.factor()
   ) |>
-  left_join(polls, 
-            by = c("country", "year_month")) |>
+  left_join(polls_tri, 
+            by = c("country", "tri", "tri_date")) |>
   mutate(parlgov_id = as.factor(parlgov_id)) |>
-  left_join(eb_months |>
+  left_join(eb_tri |>
               dplyr::select(-eu_public_opinion_0),
-            by = c("country", "year_month"))
+            by = c("country", "tri", "tri_date"))
 
-write.csv(reg_data, "reg_data.csv", row.names = FALSE)
+write.csv(reg_data_tri, "reg_data_tri.csv", row.names = FALSE)
 
 ```
+
+
 
 The variables are in the `reg_data` dataframe.
 
@@ -923,7 +1118,7 @@ The controls are RRP voteshare, RRP vote intention according to opinion polls (p
 | Current government participation          | `cabinet_party`            |
 | Party family (Cons/CD, Lib, or SocDem)    | `family_name`              |
 | Party family (Centre-Right or Centre-Left)| `family_2`                 |
-| Public opinion regarding the EU           | `eu_public_opinion`        |
+| Lag Pro EU public opinion                 | `lag_eu_public_opinion`    |
 
 : Variable names in the dataset
 
