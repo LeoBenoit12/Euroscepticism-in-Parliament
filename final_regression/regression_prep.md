@@ -1,7 +1,7 @@
 Regression Prep
 ================
 Duarte Amaro
-2026-03-09
+2026-03-10
 
 # Getting Monthly Data
 
@@ -3231,48 +3231,6 @@ polls_tri <- bind_rows(polls_aus, polls_swe, polls_dnk, polls_deu, polls_nld, po
   ungroup()
 ```
 
-## Cleaning Lehmann (2023) on EU events
-
-``` r
-l_data <- haven::read_dta("sj-dta-2-eup-10.1177_14651165221143962.dta") |>
-  filter(country %in% c(1, 11, 7, 26, 28, 20, 27)) |>
-  mutate(
-    country = case_when(
-      country == 1 ~ "AUS",
-      country == 11 ~ "DEU",
-      country == 7 ~ "DNK",
-      country == 26 ~ "ESP",
-      country == 28 ~ "GBR",
-      country == 20 ~ "NLD",
-      country == 27 ~ "SWE"
-    ),
-    trimester = ((month - 1) %/% 3) + 1,
-    tri = paste0(year, "-T", trimester),
-    tri_month = (trimester - 1) * 3 + 1,
-    tri_date = as.Date(paste(year, tri_month, "01", sep = "-")),
-  ) |>
-  dplyr::select(
-    country, tri, tri_date, 
-    treaty, #                 0 until the Lisbon Treaty entered into force, 1 afterwards
-    emu_inv, #                EMU integration: 3 = membership in Fiscal Compact, Six-Pack, 
-             #                and Eurozone, 0 = no involvement
-    directives, #             Moving average of EU directives
-    prop_leg, #               Proposed EU legislation
-    treaty_neg, #             Lisbon treaty ratification: 1 in the month of ratification, 
-                #             0.5 in the month before and after.
-    emu_neg, #                EMU ratification: idem
-    referendum, #             Domestic EU referendum
-    referendum_other, #       EU referendum elsewhere
-    council_pres, #           Council presidency: 1 if country holds the Presidency of the 
-    #                         Council of the EU
-    summit, #                 EU/Euro Summit: 1 in the month of the summit, 
-    #                         0.5 a month before and after
-    comm_app, #               Commission appointment: 1 in the month the EC President is 
-    #                         confirmed and until the entire commission is inaugurated
-    
-  )
-```
-
 ## Bringing it all together
 
 ``` r
@@ -3375,32 +3333,7 @@ reg_data_tri <- data_trimester |>
     ## Joining with `by = join_by(country, parlgov_id)`
 
 ``` r
-write.csv(reg_data_tri, "reg_data_tri.csv", row.names = FALSE)
+#write.csv(reg_data_tri, "reg_data_tri.csv", row.names = FALSE)
 ```
 
-The variables are in the `reg_data` dataframe.
-
-The dependent variables are the share of sentences about the EU and the
-share of Eurosceptic sentences (out of all sentences about the EU).
-
-The controls are RRP voteshare, RRP vote intention according to opinion
-polls (per month) own party vote loss, time to the next parliamentary
-election, time to the next European election, party size (in terms of
-vote share), current government participation, a proxy for public
-support for the EU in the country, a recession dummy variable, and
-coalition inclusion probabilities.
-
-| Variable                                   | Variable name              |
-|--------------------------------------------|----------------------------|
-| RRP vote share in the last election        | `rrp_voteshare`            |
-| Polled RRP vote share in the last month    | `lag_rrp_polled_voteshare` |
-| Own party vote share in the last election  | `vote_share`               |
-| Change in own party vote share             | `change_voteshare`         |
-| Time to the next parliamentary election    | `time_to_next`             |
-| Time to the next European election         | `time_to_next_ep`          |
-| Current government participation           | `cabinet_party`            |
-| Party family (Cons/CD, Lib, or SocDem)     | `family_name`              |
-| Party family (Centre-Right or Centre-Left) | `family_2`                 |
-| Lag Pro EU public opinion                  | `lag_eu_public_opinion`    |
-
-Variable names in the dataset
+The variables are in the `reg_data_tri` dataframe.
