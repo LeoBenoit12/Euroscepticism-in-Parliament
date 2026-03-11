@@ -105,288 +105,6 @@ reg_data_tri <- read_csv("reg_data_tri.csv") |>
 
 # Descriptive Statistics
 
-## Salience
-
-``` r
-data_trimester |>
-  filter(country == "AUS") |>
-  ggplot(aes(x = tri_date, y = share_eu)) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.5) +
-  geom_vline(aes(xintercept = next_election_date), linetype = "dashed", color = "black") +
-  facet_wrap(~name_short) +
-  #ylim(0, 0.15) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Austria by party") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-![](regression_final_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
-
-``` r
-data_trimester |>
-  filter(country == "DEU") |>
-  ggplot(aes(x = tri_date, y = share_eu)) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.5) +
-  geom_vline(aes(xintercept = next_election_date), linetype = "dashed", color = "black") +
-  facet_wrap(~name_short) +
-  #ylim(0, 0.15) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Germany by party") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : span too small.  fewer data values than degrees of freedom.
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : pseudoinverse used at 17438
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : neighborhood radius 93.825
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : reciprocal condition number 0
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : There are other near singularities as well. 8803.1
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : span too small.  fewer
-    ## data values than degrees of freedom.
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : pseudoinverse used at
-    ## 17438
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : neighborhood radius
-    ## 93.825
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : reciprocal condition
-    ## number 0
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : There are other near
-    ## singularities as well. 8803.1
-
-    ## Warning in max(ids, na.rm = TRUE): no non-missing arguments to max; returning
-    ## -Inf
-
-![](regression_final_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
-
-``` r
-data_trimester |> 
-  filter(country == "DNK") |>
-  ggplot(aes(x = tri_date, y = share_eu)) +
-  #geom_path(group=1, alpha = 0.4) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.5) +
-  geom_vline(aes(xintercept = next_election_date), linetype = "dashed", color = "black") +
-  facet_wrap(~name_short) +
-  #ylim(0, 0.15) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Denmark by party") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : span too small.  fewer data values than degrees of freedom.
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : pseudoinverse used at 10589
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : neighborhood radius 184.19
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : reciprocal condition number 0
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : There are other near singularities as well. 1.363e+05
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : span too small.  fewer
-    ## data values than degrees of freedom.
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : pseudoinverse used at
-    ## 10589
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : neighborhood radius
-    ## 184.19
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : reciprocal condition
-    ## number 0
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : There are other near
-    ## singularities as well. 1.363e+05
-
-    ## Warning in max(ids, na.rm = TRUE): no non-missing arguments to max; returning
-    ## -Inf
-
-![](regression_final_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
-
-``` r
-data_trimester |>
-  filter(country == "ESP") |>
-  ggplot(aes(x = tri_date, y = share_eu)) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.5) +
-  geom_vline(aes(xintercept = next_election_date), linetype = "dashed", color = "black") +
-  facet_wrap(~name_short) +
-  #ylim(0, 0.15) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Spain by party") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-![](regression_final_files/figure-gfm/unnamed-chunk-3-4.png)<!-- -->
-
-``` r
-data_trimester |>
-  filter(country == "NLD") |>
-  ggplot(aes(x = tri_date, y = share_eu)) +
-  #geom_path(group=1, alpha = 0.4) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.5) +
-  geom_vline(aes(xintercept = next_election_date), linetype = "dashed", color = "black") +
-  facet_wrap(~name_short) +
-  #ylim(0, 0.15) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in the Netherlands by party") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    ## Warning in stats::qt(level/2 + 0.5, pred$df): NaNs produced
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : pseudoinverse used at 11048
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : neighborhood radius 183
-
-    ## Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
-    ## : reciprocal condition number 9.876e-17
-
-    ## Warning in sqrt(sum.squares/one.delta): NaNs produced
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : pseudoinverse used at
-    ## 11048
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : neighborhood radius 183
-
-    ## Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
-    ## else if (is.data.frame(newdata))
-    ## as.matrix(model.frame(delete.response(terms(object)), : reciprocal condition
-    ## number 9.876e-17
-
-    ## Warning in stats::qt(level/2 + 0.5, pred$df): NaNs produced
-
-    ## Warning in max(ids, na.rm = TRUE): no non-missing arguments to max; returning
-    ## -Inf
-    ## Warning in max(ids, na.rm = TRUE): no non-missing arguments to max; returning
-    ## -Inf
-
-![](regression_final_files/figure-gfm/unnamed-chunk-3-5.png)<!-- -->
-
-``` r
-data_trimester |>
-  filter(country == "SWE") |>
-  ggplot(aes(x = tri_date, y = share_eu)) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.5) +
-  geom_vline(aes(xintercept = next_election_date),
-             linetype = "dashed", color = "black") +
-  facet_wrap(~name_short) +
-  #ylim(0, 0.15) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in Sweden by party") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-![](regression_final_files/figure-gfm/unnamed-chunk-3-6.png)<!-- -->
-
-``` r
-data_trimester |>
-  filter(country == "GBR") |>
-  ggplot(aes(x = tri_date, y = share_eu)) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_smooth(alpha = 0.2, colour = "blue", fill = "blue",
-              span = 0.5) +
-  geom_vline(aes(xintercept = next_election_date), linetype = "dashed", color = "black") +
-  facet_wrap(~name_short, scales = "free_y") +
-  #ylim(0, 50) +
-  labs(x = "Year",
-       y = "Share of sentences about the EU",
-       title = "Share of sentences about the EU in the UK by party") +
-  theme(panel.spacing.x = unit(5, "mm"))
-```
-
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-![](regression_final_files/figure-gfm/unnamed-chunk-3-7.png)<!-- -->
-
-``` r
-data_trimester |>
-  ggplot(aes(x = reorder(name_short, share_eu),
-             y = share_eu,
-             colour = country,
-             fill = country)) +
-  geom_boxplot(alpha = 0.2) +
-  #facet_wrap(~ country, scales = "free")
-  coord_flip() +
-  scale_color_brewer(name = "", palette = "Dark2") +
-  scale_fill_brewer(name = "", palette = "Dark2") +
-  labs(x = "", y = "Share of sentences about the EU",
-       title = "Quarterly share of sentences about the EU by party")
-```
-
-![](regression_final_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
 ## Position
 
 ``` r
@@ -410,7 +128,7 @@ data_trimester |>
 
     ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](regression_final_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 ggsave("austria_descriptives.png", device = "png", width = 12, height = 6)
@@ -440,7 +158,7 @@ data_trimester |>
 
     ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](regression_final_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
 
 ``` r
 ggsave("germany_descriptives.png", device = "png", width = 12, height = 6)
@@ -476,7 +194,7 @@ data_trimester |>
     ## Warning: Removed 5 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](regression_final_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
 
 ``` r
 ggsave("denmark_descriptives.png", device = "png", width = 12, height = 6)
@@ -510,7 +228,7 @@ data_trimester |>
 
     ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](regression_final_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-3-4.png)<!-- -->
 
 ``` r
 ggsave("spain_descriptives.png", device = "png", width = 12, height = 6)
@@ -540,7 +258,7 @@ data_trimester |>
 
     ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](regression_final_files/figure-gfm/unnamed-chunk-5-5.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-3-5.png)<!-- -->
 
 ``` r
 ggsave("netherlands_descriptives.png", device = "png", width = 12, height = 6)
@@ -576,7 +294,7 @@ data_trimester |>
     ## Warning: Removed 4 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](regression_final_files/figure-gfm/unnamed-chunk-5-6.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-3-6.png)<!-- -->
 
 ``` r
 ggsave("sweden_descriptives.png", device = "png", width = 12, height = 6)
@@ -610,7 +328,7 @@ data_trimester |>
 
     ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](regression_final_files/figure-gfm/unnamed-chunk-5-7.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-3-7.png)<!-- -->
 
 ``` r
 ggsave("uk_descriptives.png", device = "png", width = 12, height = 6)
@@ -642,7 +360,7 @@ data_trimester |>
     ## Warning: Removed 9 rows containing non-finite outside the scale range
     ## (`stat_boxplot()`).
 
-![](regression_final_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
 ggsave("quarterly_boxplot.png", device = "png", width = 12, height = 6)
@@ -673,7 +391,7 @@ data_trimester |>
     ## Warning: Removed 49 rows containing non-finite outside the scale range
     ## (`stat_boxplot()`).
 
-![](regression_final_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 
 # Validating Against CHES
 
@@ -746,7 +464,7 @@ joint_ches |>
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](regression_final_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 ggsave("ches_cross_verification.png", device = "png", width = 9.5, height = 6)
@@ -773,7 +491,7 @@ joint_ches |>
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](regression_final_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
 ggsave("ches_cross_verification_all.png", device = "png", width = 9.5, height = 6)
@@ -1894,7 +1612,7 @@ cowplot::plot_grid(plot_time, plot_log_time,
                    nrow = 2)
 ```
 
-![](regression_final_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 #ggsave("marginal_effects_time.png", device = "png", width = 9.5, height = 12)
@@ -1967,7 +1685,7 @@ plot_slopes(tri_position_7, variables = "rrp_lag", vcov = "robust",
        caption = "Point estimates with 90% and 95% confidence intervals")
 ```
 
-![](regression_final_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 #ggsave("marginal_effects_rrp_in_parl.png", device = "png", width = 9.5, height = 6)
@@ -3748,7 +3466,7 @@ cowplot::plot_grid(boot_sep, boot_both,
                    nrow = 2)
 ```
 
-![](regression_final_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](regression_final_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 #ggsave("marginal_effects_SE.png", device = "png", width = 9.5, height = 12)
