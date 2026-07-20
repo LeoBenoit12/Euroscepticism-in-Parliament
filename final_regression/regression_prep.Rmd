@@ -19,167 +19,275 @@ theme_set(theme_bw() +
 
 ```
 
-# Getting Monthly Data
+# Getting Trimester Data
 
 ## Cleaning LLM-Classified Speeches
 
-The following code is commented out because importing and reading the entire data set only to properly assemble it is slow and inexpedient.
+###  Non-EU Speeches
 
 ```{r}
 
-# eu_mentions <- read_csv("EU_Speeches_classified.csv") |>
+# aus <- read_csv("AUS_Full_Classified.csv") |>
+#   filter(EU == 0) |>
 #   mutate(
 #     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
 #     month = as.factor(format(date, "%m"))
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU_2,
-#          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-"...1") |>
-#   distinct()
-# 
-# summary(eu_mentions)
-# 
-# sum(is.na(eu_mentions$eu_mention)) ## Confirming all speeches have been assigned EU stance
-# 
-# nonEU_speeches <- read_csv("NonEU_Speeches.csv") |>
-#   mutate(
-#     eu_mention = 0,
-#     year = as.numeric(format(date, "%Y")),
-#     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
-#   ) |>
-#   rename(country = iso3country,
-#          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c("...1", "Unnamed: 0")) |>
-#   distinct()
-# 
-# nonEU_speeches_UK <- read_csv("UK_NonEU.csv") |>
-#   mutate(
-#     eu_mention = 0,
-#     year = as.numeric(format(date, "%Y")),
-#     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
-#   ) |>
-#   rename(country = iso3country,
-#          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-"...1") |>
-#   distinct()
-# 
-# eu_stance <- read_csv("Final_Classified_Speeches.csv") |>
-#   mutate(
-#     Stance = as.factor(Stance),
-#     year = as.numeric(format(date, "%Y")),
-#     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
-#   ) |>
-#   rename(country = iso3country,
-#          eu_mention = EU_2,
+#          eu_mention = EU,
+#          eu_opposition = Opposition,
+#          eu_support = Support,
 #          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   #dplyr::select(-"Unnamed: 0") |>
-#   distinct()
+#   dplyr::select(-c(`...1`))
 # 
-# data0 <- eu_mentions |>
-#   bind_rows(
-#     nonEU_speeches
+# dnk <- read_csv("DNK_Full_Classified.csv") |>
+#   filter(EU == 0) |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
 #   ) |>
-#   bind_rows(
-#     nonEU_speeches_UK
-#   ) |>
-#   left_join(eu_stance)
+#   rename(country = iso3country,
+#          eu_mention = EU,
+#          eu_opposition = Opposition,
+#          eu_support = Support,
+#          eu_stance = Stance,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-c(`...1`))
 # 
-# write.csv(data0, "data0.csv", row.names = FALSE)
+# swe <- read_csv("SWE_Full_Classified.csv") |>
+#   filter(EU == 0) |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU,
+#          eu_opposition = Opposition,
+#          eu_support = Support,
+#          eu_stance = Stance,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-c(`...1`))
+# 
+# deu <- read_csv("DEU_Full_Classified.csv") |>
+#   filter(EU == 0) |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU,
+#          eu_opposition = Opposition,
+#          eu_support = Support,
+#          eu_stance = Stance,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-c(`...1`))
+# 
+# esp <- read_csv("ESP_Full_Classified.csv") |>
+#   filter(EU == 0) |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU,
+#          eu_opposition = Opposition,
+#          eu_support = Support,
+#          eu_stance = Stance,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-c(`...1`))
+# 
+# nld <- read_csv("NLD_Full_Classified.csv") |>
+#   filter(EU == 0) |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU,
+#          eu_opposition = Opposition,
+#          eu_support = Support,
+#          eu_stance = Stance,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-c(`...1`))
+# 
+# gbr <- read_csv("GBR_Full_Classified.csv") |>
+#   filter(EU == 0) |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m"))
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU,
+#          eu_opposition = Opposition,
+#          eu_support = Support,
+#          eu_stance = Stance,
+#          partyfacts_id = party.facts.id) |>
+#   dplyr::select(-c(`...1`))
+# 
+# data_no_EU <- aus |>
+#   bind_rows(dnk) |>
+#   bind_rows(swe) |>
+#   bind_rows(deu) |>
+#   bind_rows(esp) |>
+#   bind_rows(nld) |>
+#   bind_rows(gbr) |>
+#   dplyr::select(-c(EU_prob, eu_opposition, Opposition_prob, 
+#                    eu_support, Support_prob, eu_stance, year))
+
+#sum(is.na(data0$eu_mention)) ## Confirming all speeches have been assigned EU stance))
+
+
+#sum(is.na(data0$eu_stance[data0$eu_mention == 1])) ## Confirming all EU-mentioning speeches have been assigned EU stance
+
+#write.csv(data0, "data0.csv", row.names = FALSE)
+
+```
+
+```{r}
+
+data0 <- read_csv("data0.csv")
+
+```
+
+```{r}
+
+# data0.1 <- read_csv("Ches_Year_classified_compact_V1.csv") |>
+#   dplyr::select(-c(`...1`, 
+#                    EU_prob, Opposition, Opposition_prob, Support, Support_prob, Stance, `Unnamed: 0`, 
+#                    mmbert_3way_pred, mmbert_cascade_pred, 
+#                    xlm_base_3way_pred, xlm_base_cascade_pred, 
+#                    xlm_large_cascade_pred, mmbert_cascade_updated_pred)) |>
+#   rename(pred = xlm_large_3way_pred)
+# 
+# data0.2 <- read_csv("EU_toClassify_v1_classified.csv") |>
+#   dplyr::select(-c(`...1`, 
+#                    EU_prob, Opposition, Opposition_prob, Support, Support_prob, Stance, `Unnamed: 0`, 
+#                    prob_neutral, prob_opposition, prob_support))
+# 
+# colnames(data0.1) == colnames(data0.2)
+# 
+# data0 <- data0.1 |>
+#   bind_rows(data0.2) |>
+#   mutate(
+#     year = as.numeric(format(date, "%Y")),
+#     year_month = as.factor(format(date, "%Y-%m")),
+#     month = as.factor(format(date, "%m")),
+#     eu_support = ifelse(pred == "Support", 1, 0),
+#     eu_opposition = ifelse(pred == "Opposition", 1, 0)
+#   ) |>
+#   rename(country = iso3country,
+#          eu_mention = EU,
+#          partyfacts_id = party.facts.id) |>
+#   bind_rows(data_no_EU) 
+
+#write.csv(data0, "data0.csv", row.names = FALSE)
+
 ```
 
 
-
 ```{r}
-data0 <- read_csv("data0.csv") |>
-  mutate(year_month = as.factor(year_month))
 
-data_individual_positions_year <- data0 |>
-  group_by(country, partyfacts_id, speaker, year) |>
+data_cross_verification <- read_csv("Ches_Year_classified_compact_V1.csv") |>
+    dplyr::select(-`...1`) |>
+    mutate(
+        year = as.numeric(format(date, "%Y")),
+        year_month = as.factor(format(date, "%Y-%m")),
+        month = as.factor(format(date, "%m"))
+    ) |>
+    rename(country = iso3country,
+           eu_mention = EU,
+           partyfacts_id = party.facts.id) |>
+    mutate(eu_support_mmbert_3way = ifelse(mmbert_3way_pred == "Support", 1, 0),
+           eu_support_mmbert_cascade = ifelse(mmbert_cascade_updated_pred == "Support", 1, 0),
+           eu_support_xlm_3way = ifelse(xlm_base_3way_pred == "Support", 1, 0),
+           eu_support_xlm_cascade = ifelse(xlm_base_cascade_pred == "Support", 1, 0),
+           eu_support_large_3way = ifelse(xlm_large_3way_pred == "Support", 1, 0),
+           eu_support_large_cascade = ifelse(xlm_large_cascade_pred == "Support", 1, 0),
+           
+           eu_opposition_mmbert_3way = ifelse(mmbert_3way_pred == "Opposition", 1, 0),
+           eu_opposition_mmbert_cascade = ifelse(mmbert_cascade_updated_pred == "Opposition", 1, 0),
+           eu_opposition_xlm_3way = ifelse(xlm_base_3way_pred == "Opposition", 1, 0),
+           eu_opposition_xlm_cascade = ifelse(xlm_base_cascade_pred == "Opposition", 1, 0),
+           eu_opposition_large_3way = ifelse(xlm_large_3way_pred == "Opposition", 1, 0),
+           eu_opposition_large_cascade = ifelse(xlm_large_cascade_pred == "Opposition", 1, 0)
+           ) |>
+  group_by(country, partyfacts_id, year) |>
   summarise(
     count = n(),
     count_mention = sum(eu_mention == 1, na.rm = TRUE),
-    count_support = sum(Support == 1, na.rm = TRUE),
-    count_neutral = sum(Neutral == 1, na.rm = TRUE),
-    count_oppose = sum(Opposition == 1, na.rm = TRUE),
-    prop_eu_mention = 100*mean(eu_mention, na.rm = TRUE),
-    prop_support = 100*count_support/count_mention,
-    prop_neutral = 100*count_neutral/count_mention,
-    prop_oppose = 100*count_oppose/count_mention,
-    net_position = prop_support - prop_oppose
+    
+    count_support_mmbert_3way = sum(eu_support_mmbert_3way, na.rm = TRUE),
+    count_support_mmbert_cascade = sum(eu_support_mmbert_cascade, na.rm = TRUE),
+    count_support_xlm_3way = sum(eu_support_xlm_3way, na.rm = TRUE),
+    count_support_xlm_cascade = sum(eu_support_xlm_cascade, na.rm = TRUE),
+    count_support_large_3way = sum(eu_support_large_3way, na.rm = TRUE),
+    count_support_large_cascade = sum(eu_support_large_cascade, na.rm = TRUE),
+    
+    count_oppose_mmbert_3way = sum(eu_opposition_mmbert_3way, na.rm = TRUE),
+    count_oppose_mmbert_cascade = sum(eu_opposition_mmbert_cascade, na.rm = TRUE),
+    count_oppose_xlm_3way = sum(eu_opposition_xlm_3way, na.rm = TRUE),
+    count_oppose_xlm_cascade = sum(eu_opposition_xlm_cascade, na.rm = TRUE),
+    count_oppose_large_3way = sum(eu_opposition_large_3way, na.rm = TRUE),
+    count_oppose_large_cascade = sum(eu_opposition_large_cascade, na.rm = TRUE),
+    
+    prop_support_mmbert_3way = count_support_mmbert_3way/count_mention,
+    prop_support_mmbert_cascade = count_support_mmbert_cascade/count_mention,
+    prop_support_xlm_3way = count_support_xlm_3way/count_mention,
+    prop_support_xlm_cascade = count_support_xlm_cascade/count_mention,
+    prop_support_large_3way = count_support_large_3way/count_mention,
+    prop_support_large_cascade = count_support_large_cascade/count_mention,
+    
+    prop_oppose_mmbert_3way = count_oppose_mmbert_3way/count_mention,
+    prop_oppose_mmbert_cascade = count_oppose_mmbert_cascade/count_mention,
+    prop_oppose_xlm_3way = count_oppose_xlm_3way/count_mention,
+    prop_oppose_xlm_cascade = count_oppose_xlm_cascade/count_mention,
+    prop_oppose_large_3way = count_oppose_large_3way/count_mention,
+    prop_oppose_large_cascade = count_oppose_large_cascade/count_mention,
+    
+    net_position_mmbert_3way = prop_support_mmbert_3way - prop_oppose_mmbert_3way,
+    net_position_mmbert_cascade = prop_support_mmbert_cascade - prop_oppose_mmbert_cascade,
+    net_position_xlm_3way = prop_support_xlm_3way - prop_oppose_xlm_3way,
+    net_position_xlm_cascade = prop_support_xlm_cascade - prop_oppose_xlm_cascade,
+    net_position_large_3way = prop_support_large_3way - prop_oppose_large_3way,
+    net_position_large_cascade = prop_support_large_cascade - prop_oppose_large_cascade
   ) |>
   ungroup()
 
-data_sd_year <- data_individual_positions_year |>
-  group_by(country, partyfacts_id, year) |>
-  summarise(
-    sd_eu_mention = sd(prop_eu_mention, na.rm = TRUE),
-    sd_position = sd(net_position, na.rm = TRUE)
-  ) |>
-  ungroup()
+#write.csv(data_cross_verification, "data_ches_cross_verification.csv", row.names = FALSE)
+
+```
+
+```{r}
 
 data_yearly <- data0 |>
   group_by(country, partyfacts_id, year) |>
   summarise(
     count = n(),
     count_mention = sum(eu_mention == 1, na.rm = TRUE),
-    count_support = sum(Support == 1, na.rm = TRUE),
-    count_neutral = sum(Neutral == 1, na.rm = TRUE),
-    count_oppose = sum(Opposition == 1, na.rm = TRUE),
-    prop_eu_mention = 100*mean(eu_mention, na.rm = TRUE),
-    prop_support = 100*count_support/count_mention,
-    prop_neutral = 100*count_neutral/count_mention,
-    prop_oppose = 100*count_oppose/count_mention,
+    count_support = sum(eu_support == 1, na.rm = TRUE),
+    count_oppose = sum(eu_opposition == 1, na.rm = TRUE),
+    prop_eu_mention = mean(eu_mention, na.rm = TRUE),
+    prop_support = count_support/count_mention,
+    prop_oppose = count_oppose/count_mention,
     net_position = prop_support - prop_oppose
   ) |>
-  ungroup() |>
-  left_join(data_sd_year)
+  ungroup()
 
 #write.csv(data_yearly, "data_yearly.csv", row.names = FALSE)
+
 ```
 
-# Getting Trimester Data
-
-## Cleaning LLM-Classified Speeches
 
 ```{r}
-df_trimester <- data0 %>%
-  mutate(
-    year_month_chr = as.character(year_month),
-    ym_date = date,
-    year = year(ym_date),
-    month = month(ym_date),
-    # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
-    trimester = ((month - 1) %/% 3) + 1,
-    # a convenient label
-    tri = paste0(year, "-T", trimester),
-    tri_month = (trimester - 1) * 3 + 1,
-    # make a Date for the first day of the trimester
-    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
-  ) %>%
-  # 3) aggregate by country, party and trimester
-  group_by(country, partyfacts_id, tri, tri_date) %>%
-  summarise(
-    n_sentences = n(),                            # total sentences in the trimester-cell
-    n_eu = sum(eu_mention == 1, na.rm = TRUE),    # number of EU-mentioning sentences
-    share_eu = ifelse(n_sentences > 0, n_eu / n_sentences, NA_real_),
-    # shares among EU mentions -> use mean on Support/Opposition which are NA for non-eu rows
-    share_support = ifelse(n_eu > 0, mean(Support, na.rm = TRUE), NA_real_),
-    share_opposition = ifelse(n_eu > 0, mean(Opposition, na.rm = TRUE), NA_real_),
-    net_position = ifelse(n_eu > 0, share_support - share_opposition, NA_real_),
-    .groups = "drop"
-  )
-
-# View(df_trimester)
-```
-
-```{r}
-data_individual_positions <- data0 |>
+df_trimester <- data0 |>
   mutate(
     year_month_chr = as.character(year_month),
     ym_date = date,
@@ -193,55 +301,26 @@ data_individual_positions <- data0 |>
     # make a Date for the first day of the trimester
     tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
   ) |>
-  group_by(country, partyfacts_id, speaker, tri, tri_date) |>
+  group_by(country, partyfacts_id, tri, tri_date) |>
   summarise(
     count = n(),
     count_mention = sum(eu_mention == 1, na.rm = TRUE),
-    count_support = sum(Support == 1, na.rm = TRUE),
-    count_neutral = sum(Neutral == 1, na.rm = TRUE),
-    count_oppose = sum(Opposition == 1, na.rm = TRUE),
-    prop_eu_mention = 100*mean(eu_mention, na.rm = TRUE),
-    prop_support = 100*count_support/count_mention,
-    prop_neutral = 100*count_neutral/count_mention,
-    prop_oppose = 100*count_oppose/count_mention,
+    count_support = sum(eu_support == 1, na.rm = TRUE),
+    count_oppose = sum(eu_opposition == 1, na.rm = TRUE),
+    prop_eu_mention = mean(eu_mention, na.rm = TRUE),
+    prop_support = count_support/count_mention,
+    prop_oppose = count_oppose/count_mention,
     net_position = prop_support - prop_oppose
+    # n_sentences = n(),                            # total sentences in the trimester-cell
+    # n_eu = sum(eu_mention == 1, na.rm = TRUE),    # number of EU-mentioning sentences
+    # share_eu = ifelse(n_sentences > 0, n_eu / n_sentences, NA_real_),
+    # # shares among EU mentions -> use mean on Support/Opposition which are NA for non-eu rows
+    # share_support = ifelse(n_eu > 0, mean(eu_support, na.rm = TRUE), NA_real_),
+    # share_opposition = ifelse(n_eu > 0, mean(eu_opposition, na.rm = TRUE), NA_real_),
+    # net_position = ifelse(n_eu > 0, share_support - share_opposition, NA_real_),
+    # .groups = "drop"
   ) |>
   ungroup()
-```
-
-```{r}
-
-data_sd_0 <- data_individual_positions |>
-  group_by(country, partyfacts_id, tri, tri_date) |>
-  summarise(
-    sd_eu_mention_0 = sd(prop_eu_mention, na.rm = TRUE),
-    sd_position_0 = sd(net_position, na.rm = TRUE)
-  ) |>
-  ungroup()
-
-data_sd_1 <- data_individual_positions |>
-  filter(prop_eu_mention > 1) |>
-  group_by(country, partyfacts_id, tri, tri_date) |>
-  summarise(
-    sd_eu_mention_1 = sd(prop_eu_mention, na.rm = TRUE),
-    sd_position_1 = sd(net_position, na.rm = TRUE)
-  ) |>
-  ungroup()
-
-data_sd_5 <- data_individual_positions |>
-  filter(prop_eu_mention > 5) |>
-  group_by(country, partyfacts_id, tri, tri_date) |>
-  summarise(
-    sd_eu_mention_5 = sd(prop_eu_mention, na.rm = TRUE),
-    sd_position_5 = sd(net_position, na.rm = TRUE)
-  ) |>
-  ungroup()
-
-
-df_trimester_0 <- df_trimester |>
-  left_join(data_sd_0, by = c("country", "partyfacts_id", "tri", "tri_date")) |>
-  left_join(data_sd_1, by = c("country", "partyfacts_id", "tri", "tri_date")) |>
-  left_join(data_sd_5, by = c("country", "partyfacts_id", "tri", "tri_date"))
 
 ```
 
@@ -251,7 +330,7 @@ df_trimester_0 <- df_trimester |>
 ## Getting parlgov and partyfacts codes:
 
 partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
-  filter((partyfacts_id %in% unique(df_trimester_0$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
+  filter((partyfacts_id %in% unique(df_trimester$partyfacts_id) | partyfacts_id == 540) & # For some reason, PartyFacts codes LibDems differently for ParlGov
            dataset_key == "parlgov" &
            year_last >= 1998) |>
   rename(parlgov_id = dataset_party_id,
@@ -259,7 +338,7 @@ partyfacts_to_parlgov <- read_csv("partyfacts-external-parties.csv") |>
 
 ## Merging partyfacts and parlgov codes with speeches
 
-df_trimester_1 <- df_trimester_0 |>
+df_trimester_1 <- df_trimester |>
   dplyr::select(country, partyfacts_id) |>
   distinct() |>
   mutate(partyfacts_id = case_when(partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
@@ -272,7 +351,7 @@ df_trimester_1 <- df_trimester_0 |>
                 name,
                 name_english) |>
   full_join(
-    df_trimester_0 |>
+    df_trimester |>
       mutate(
         partyfacts_id = case_when(partyfacts_id == 1388 ~ 540, # LibDems in ParlGov
                                   .default = partyfacts_id)
@@ -281,7 +360,7 @@ df_trimester_1 <- df_trimester_0 |>
   ) |>
   mutate(parlgov_id = as.numeric(parlgov_id))
 
-nrow(df_trimester_1) == nrow(df_trimester_0) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
+nrow(df_trimester_1) == nrow(df_trimester) # Confirming we don't have a many-to-many relationship and we keep the same number of rows
 ```
 
 ```{r}
@@ -534,7 +613,7 @@ data_trimester <- df_trimester_1 |>
 
 nrow(data_trimester) == nrow(df_trimester_1)
 
-write.csv(data_trimester, "data_trimester.csv", row.names = FALSE)
+#write.csv(data_trimester, "data_trimester.csv", row.names = FALSE)
 
 
 ```
@@ -543,99 +622,141 @@ write.csv(data_trimester, "data_trimester.csv", row.names = FALSE)
 
 ```{r}
 
-eb <- haven::read_dta("EB_1973_2022_2025_JAN.dta")
+eb1 <- haven::read_dta("ZA3521_v2-0-1.dta")
 
-
-eb98_2021 <- eb |>
-  filter(YEAR >= 1998 & YEAR <= 2021 & NATION2 %in% c(3, 4, 7, 9, 11, 14, 15)) |>
+eb98_02 <- eb1 |>
+  filter(nation2 %in% c(3, 4, 7, 9, 12, 17, 18) &
+           year >= 1998) |>
   mutate(
-    nation2 = case_when(
-      NATION2 == 3 ~ "NLD",
-      NATION2 == 4 ~ "DEU",
-      NATION2 == 7 ~ "DNK",
-      NATION2 == 9 ~ "GBR",
-      NATION2 == 11 ~ "ESP",
-      NATION2 == 14 ~ "SWE",
-      NATION2 == 15 ~ "AUS"
+    country = case_when(
+      nation2 == 3 ~ "NLD",
+      nation2 == 4 ~ "DEU",
+      nation2 == 14 ~ "DEU",
+      nation2 == 7 ~ "DNK",
+      nation2 == 9 ~ "GBR",
+      nation2 == 12 ~ "ESP",
+      nation2 == 17 ~ "SWE",
+      nation2 == 18 ~ "AUS"
     ) |> as.character(),
-    month_chr = str_replace(as.character(round(month, digits = 2)), "\\.", "-"),
-    month_chr = case_when(
-      month_chr == "9-1" ~ "10", # This is a hack to deal with the fact that some months are coded as 9.10 
-                                  # but rounding leaves it as 1
-      .default = month_chr
+    month = case_when(
+      eb == 490 ~ 5,
+      eb == 500 ~ 11,
+      eb == 501 ~ 12,
+      eb == 510 ~ 4,
+      eb == 511 ~ 5,
+      eb == 520 ~ 11,
+      eb == 521 ~ 12,
+      eb == 530 ~ 5,
+      eb == 540 ~ 11,
+      eb == 541 ~ 12,
+      eb == 542 ~ 2,
+      eb == 550 ~ 4,
+      eb == 551 ~ 5,
+      eb == 552 ~ 6,
+      eb == 560 ~ 9,
+      eb == 561 ~ 10,
+      eb == 562 ~ 11,
+      eb == 563 ~ 2,
+      eb == 570 ~ 4,
+      eb == 571 ~ 5,
+      eb == 572 ~ 6
     ),
-    month_2 = sapply(str_split(month_chr, "-"), function(x) tail(x, 1)),
-    year_month = paste(as.character(YEAR), sprintf("%02d", as.numeric(month_2)), sep = "-") |>
-      as.factor(),
-    date = paste(as.character(year_month), "01", sep = "-") |>
-      as.Date()
+    year_month = paste(year, month, sep = "-")
+    # intdate_end_chr = as.character(intdate_end),
+    # year_month0 = str_extract(intdate_end_chr, "^.{6}"),
+    # year = str_extract(intdate_end_chr, "^.{4}"),
+    # month = str_extract(year_month0, ".{2}$"),
+    # year_month = paste(year, month, sep = "-")
   ) 
 
-eb_final <- eb98_2021 |>
+eb_final_1 <- eb98_02 |>
   dplyr::select(
-    nation2, year_month, date, MEMBRSHP, BENEFIT, EUSPEED1, EUSPEED2, TRUSTEC, TRUSTEP, SATISDEU, FEEL
+    country, year_month, year, month, membrshp, benefit, trustec, trustep, satisdeu, feel
   ) |>
     mutate(
+    membrshp = case_when(
+      membrshp < 4 ~ membrshp,
+      .default = NA
+    ),
     mem = case_when(
-      MEMBRSHP == 1 ~ "Good",
-      MEMBRSHP == 0 ~ "Neither",
-      MEMBRSHP == -1 ~ "Bad",
-      TRUE ~ NA_character_
+      membrshp == 1 ~ "Good",
+      membrshp == 2 ~ "Neither",
+      membrshp == 3 ~ "Bad",
+      .default = NA_character_
     ) |>
       factor(levels = c("Good", "Neither", "Bad")),
-    std_mem = (as.numeric(MEMBRSHP) + 1)/2,
+    std_mem = (-as.numeric(membrshp) + 3)/2,
+    
     
     benefit = case_when(
-      BENEFIT == 1 ~ "Benefited",
-      BENEFIT == 0 ~ "Not benefited",
+      benefit < 3 ~ benefit,
+      .default = NA
+    ),
+    std_ben = (-as.numeric(benefit) + 2),
+    benefit = case_when(
+      benefit == 1 ~ "Benefited",
+      benefit == 2 ~ "Not benefited",
       TRUE ~ NA_character_
     ) |>
       factor(levels = c("Benefited", "Not benefited")),
-    std_ben = as.numeric(BENEFIT),
     
+    trustec = case_when(
+      trustec < 4 ~ trustec,
+      .default = NA
+    ),
+    std_trust_ec = (-as.numeric(trustec) + 2),
     trust_ec = case_when(
-      TRUSTEC == 1 ~ "Trust",
-      TRUSTEC == 0 ~ "No Trust",
+      trustec == 1 ~ "Trust",
+      trustec == 2 ~ "No Trust",
       TRUE ~ NA_character_
     ) |>
       as.factor(),
-    std_trust_ec = as.numeric(TRUSTEC),
     
+    trustep = case_when(
+      trustep < 4 ~ trustep,
+      .default = NA
+    ),
+    std_trust_ep = (-as.numeric(trustep) + 2),
     trust_ep = case_when(
-      TRUSTEP == 1 ~ "Trust",
-      TRUSTEP == 0 ~ "No Trust",
+      trustep == 1 ~ "Trust",
+      trustep == 2 ~ "No Trust",
       TRUE ~ NA_character_
     ) |>
       as.factor(),
-    std_trust_ep = as.numeric(TRUSTEP),
     
+    satisdeu = case_when(
+      satisdeu < 5 ~ satisdeu,
+      .default = NA
+    ),
+    std_sat_deu = (-as.numeric(satisdeu) + 4)/3,
     sat_deu = case_when(
-      SATISDEU == 3 ~ "Very satisfied",
-      SATISDEU == 2 ~ "Fairly satisfied",
-      SATISDEU == 1 ~ "Not very satisfied",
-      SATISDEU == 0 ~ "Not at all satisfied",
+      satisdeu == 1 ~ "Very satisfied",
+      satisdeu == 2 ~ "Fairly satisfied",
+      satisdeu == 3 ~ "Not very satisfied",
+      satisdeu == 4 ~ "Not at all satisfied",
       TRUE ~ NA_character_
     ) |>
       factor(),
-    std_sat_deu = as.numeric(SATISDEU)/3,
+    
     
     feel = case_when(
-      FEEL == 2 ~ "European",
-      FEEL == 1 ~ "Shared",
-      FEEL == 0 ~ "National",
-      TRUE ~ NA_character_
+      feel < 5 ~ feel,
+      .default = NA
     ),
-    std_feel = as.numeric(FEEL)/2
+    std_feel = as.numeric(feel)/4,
+    feel = case_when(
+      feel == 4 ~ "European",
+      feel == 3 ~ "European then National",
+      feel == 2 ~ "National then European",
+      feel == 1 ~ "National",
+      TRUE ~ NA_character_
+    )
     )
 
-eb_means_tri <- eb_final |>
-  #mutate(tri_date = as.Date(paste(year_month, "-01", sep = ""))) |>
+eb_means_tri_1 <- eb_final_1 |>
   mutate(
     year_month_chr = as.character(year_month),
-    ym_date = date,
-    year = year(ym_date),
-    month = month(ym_date),
-    # 2) compute trimester number (1..4 where 1 = Jan-Mar, 2 = Apr-Jun, ...)
+    month = as.numeric(month),
     trimester = ((month - 1) %/% 3) + 1,
     # a convenient label
     tri = paste0(year, "-T", trimester),
@@ -643,7 +764,7 @@ eb_means_tri <- eb_final |>
     # make a Date for the first day of the trimester
     tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
   ) |>
-  group_by(nation2, tri_date, tri) |>
+  group_by(country, tri_date, tri) |>
   summarise(
     std_mem = mean(std_mem, na.rm = TRUE),
     std_ben = mean(std_ben, na.rm = TRUE),
@@ -668,17 +789,581 @@ eb_means_tri <- eb_final |>
   )
 
 
+eb581 <- haven::read_dta("ZA3693_v1-0-1.dta") |>
+  filter(v12 %in% c(3, 4, 7, 9, 11, 15, 16)) |>
+  mutate(
+    country = case_when(
+      v12 == 3 ~ "NLD",
+      v12 == 4 ~ "DEU",
+      v12 == 7 ~ "DNK",
+      v12 == 9 ~ "GBR",
+      v12 == 11 ~ "ESP",
+      v12 == 15 ~ "SWE",
+      v12 == 16 ~ "AUS"
+    ) |> as.character(),
+    month = 11,
+    year = 2002,
+    year_month = paste(year, month, sep = "-")
+    # intdate_end_chr = as.character(intdate_end),
+    # year_month0 = str_extract(intdate_end_chr, "^.{6}"),
+    # year = str_extract(intdate_end_chr, "^.{4}"),
+    # month = str_extract(year_month0, ".{2}$"),
+    # year_month = paste(year, month, sep = "-")
+  ) 
+
+eb_final_581 <- eb581 |>
+  dplyr::select(
+    country, year_month, year, month, v92, v93, v122, v121, v132, v214
+  ) |>
+    mutate(
+    membrshp = case_when(
+      v92 < 4 ~ v92,
+      .default = NA
+    ),
+    mem = case_when(
+      membrshp == 1 ~ "Good",
+      membrshp == 2 ~ "Neither",
+      membrshp == 3 ~ "Bad",
+      .default = NA_character_
+    ) |>
+      factor(levels = c("Good", "Neither", "Bad")),
+    std_mem = (-as.numeric(membrshp) + 3)/2,
+    
+    
+    benefit = case_when(
+      v93 < 3 ~ v93,
+      .default = NA
+    ),
+    std_ben = (-as.numeric(benefit) + 2),
+    benefit = case_when(
+      benefit == 1 ~ "Benefited",
+      benefit == 2 ~ "Not benefited",
+      TRUE ~ NA_character_
+    ) |>
+      factor(levels = c("Benefited", "Not benefited")),
+    
+    trustec = case_when(
+      v122 < 4 ~ v122,
+      .default = NA
+    ),
+    std_trust_ec = (-as.numeric(trustec) + 2),
+    trust_ec = case_when(
+      trustec == 1 ~ "Trust",
+      trustec == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    
+    trustep = case_when(
+      v121 < 4 ~ v121,
+      .default = NA
+    ),
+    std_trust_ep = (-as.numeric(trustep) + 2),
+    trust_ep = case_when(
+      trustep == 1 ~ "Trust",
+      trustep == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    
+    satisdeu = case_when(
+      v132 < 5 ~ v132,
+      .default = NA
+    ),
+    std_sat_deu = (-as.numeric(satisdeu) + 4)/3,
+    sat_deu = case_when(
+      satisdeu == 1 ~ "Very satisfied",
+      satisdeu == 2 ~ "Fairly satisfied",
+      satisdeu == 3 ~ "Not very satisfied",
+      satisdeu == 4 ~ "Not at all satisfied",
+      TRUE ~ NA_character_
+    ) |>
+      factor(),
+    
+    
+    feel = case_when(
+      v214 < 5 ~ v214,
+      .default = NA
+    ),
+    std_feel = as.numeric(feel)/4,
+    feel = case_when(
+      feel == 4 ~ "European",
+      feel == 3 ~ "European then National",
+      feel == 2 ~ "National then European",
+      feel == 1 ~ "National",
+      TRUE ~ NA_character_
+    )
+    )
+
+eb_means_tri_581 <- eb_final_581 |>
+  mutate(
+    year_month_chr = as.character(year_month),
+    month = as.numeric(month),
+    trimester = ((month - 1) %/% 3) + 1,
+    # a convenient label
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    # make a Date for the first day of the trimester
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
+  ) |>
+  group_by(country, tri_date, tri) |>
+  summarise(
+    std_mem = mean(std_mem, na.rm = TRUE),
+    std_ben = mean(std_ben, na.rm = TRUE),
+    std_trust_ec = mean(std_trust_ec, na.rm = TRUE),
+    std_trust_ep = mean(std_trust_ep, na.rm = TRUE),
+    std_sat_deu = mean(std_sat_deu, na.rm = TRUE),
+    std_feel = mean(std_feel, na.rm = TRUE)
+  ) |>
+  ungroup() |>
+  mutate(std_mem = case_when(is.nan(std_mem) ~ NA_real_,
+                             .default = std_mem),
+         std_ben = case_when(is.nan(std_ben) ~ NA_real_,
+                             .default = std_ben),
+         std_trust_ec = case_when(is.nan(std_trust_ec) ~ NA_real_,
+                                  .default = std_trust_ec),
+         std_trust_ep = case_when(is.nan(std_trust_ep) ~ NA_real_,
+                                  .default = std_trust_ep),
+         std_sat_deu = case_when(is.nan(std_sat_deu) ~ NA_real_,
+                                 .default = std_sat_deu),
+         std_feel = case_when(is.nan(std_feel) ~ NA_real_,
+                              .default = std_feel)
+  )
+
+eb591 <- haven::read_dta("ZA3904_v1-0-1.dta") |>
+  filter(v13 %in% c(3, 4, 7, 9, 11, 15, 16)) |>
+  mutate(
+    country = case_when(
+      v13 == 3 ~ "NLD",
+      v13 == 4 ~ "DEU",
+      v13 == 7 ~ "DNK",
+      v13 == 9 ~ "GBR",
+      v13 == 11 ~ "ESP",
+      v13 == 15 ~ "SWE",
+      v13 == 16 ~ "AUS"
+    ) |> as.character(),
+    month = 4,
+    year = 2003,
+    year_month = paste(year, month, sep = "-")
+    # intdate_end_chr = as.character(intdate_end),
+    # year_month0 = str_extract(intdate_end_chr, "^.{6}"),
+    # year = str_extract(intdate_end_chr, "^.{4}"),
+    # month = str_extract(year_month0, ".{2}$"),
+    # year_month = paste(year, month, sep = "-")
+  ) 
+
+eb_final_591 <- eb591 |>
+  dplyr::select(
+    country, year_month, year, month, v109, v110, v149, v150, v162, v112
+  ) |>
+    mutate(
+    membrshp = case_when(
+      v109 < 4 ~ v109,
+      .default = NA
+    ),
+    mem = case_when(
+      membrshp == 1 ~ "Good",
+      membrshp == 2 ~ "Neither",
+      membrshp == 3 ~ "Bad",
+      .default = NA_character_
+    ) |>
+      factor(levels = c("Good", "Neither", "Bad")),
+    std_mem = (-as.numeric(membrshp) + 3)/2,
+    
+    
+    benefit = case_when(
+      v110 < 3 ~ v110,
+      .default = NA
+    ),
+    std_ben = (-as.numeric(benefit) + 2),
+    benefit = case_when(
+      benefit == 1 ~ "Benefited",
+      benefit == 2 ~ "Not benefited",
+      TRUE ~ NA_character_
+    ) |>
+      factor(levels = c("Benefited", "Not benefited")),
+    
+    trustec = case_when(
+      v150 < 4 ~ v150,
+      .default = NA
+    ),
+    std_trust_ec = (-as.numeric(trustec) + 2),
+    trust_ec = case_when(
+      trustec == 1 ~ "Trust",
+      trustec == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    
+    trustep = case_when(
+      v149 < 4 ~ v149,
+      .default = NA
+    ),
+    std_trust_ep = (-as.numeric(trustep) + 2),
+    trust_ep = case_when(
+      trustep == 1 ~ "Trust",
+      trustep == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    
+    satisdeu = case_when(
+      v162 < 5 ~ v162,
+      .default = NA
+    ),
+    std_sat_deu = (-as.numeric(satisdeu) + 4)/3,
+    sat_deu = case_when(
+      satisdeu == 1 ~ "Very satisfied",
+      satisdeu == 2 ~ "Fairly satisfied",
+      satisdeu == 3 ~ "Not very satisfied",
+      satisdeu == 4 ~ "Not at all satisfied",
+      TRUE ~ NA_character_
+    ) |>
+      factor(),
+    
+    
+    feel = case_when(
+      v112 < 5 ~ v112,
+      .default = NA
+    ),
+    std_feel = as.numeric(feel)/4,
+    feel = case_when(
+      feel == 4 ~ "European",
+      feel == 3 ~ "European then National",
+      feel == 2 ~ "National then European",
+      feel == 1 ~ "National",
+      TRUE ~ NA_character_
+    )
+    )
+
+eb_means_tri_591 <- eb_final_591 |>
+  mutate(
+    year_month_chr = as.character(year_month),
+    month = as.numeric(month),
+    trimester = ((month - 1) %/% 3) + 1,
+    # a convenient label
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    # make a Date for the first day of the trimester
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
+  ) |>
+  group_by(country, tri_date, tri) |>
+  summarise(
+    std_mem = mean(std_mem, na.rm = TRUE),
+    std_ben = mean(std_ben, na.rm = TRUE),
+    std_trust_ec = mean(std_trust_ec, na.rm = TRUE),
+    std_trust_ep = mean(std_trust_ep, na.rm = TRUE),
+    std_sat_deu = mean(std_sat_deu, na.rm = TRUE),
+    std_feel = mean(std_feel, na.rm = TRUE)
+  ) |>
+  ungroup() |>
+  mutate(std_mem = case_when(is.nan(std_mem) ~ NA_real_,
+                             .default = std_mem),
+         std_ben = case_when(is.nan(std_ben) ~ NA_real_,
+                             .default = std_ben),
+         std_trust_ec = case_when(is.nan(std_trust_ec) ~ NA_real_,
+                                  .default = std_trust_ec),
+         std_trust_ep = case_when(is.nan(std_trust_ep) ~ NA_real_,
+                                  .default = std_trust_ep),
+         std_sat_deu = case_when(is.nan(std_sat_deu) ~ NA_real_,
+                                 .default = std_sat_deu),
+         std_feel = case_when(is.nan(std_feel) ~ NA_real_,
+                              .default = std_feel)
+  )
+
+eb601 <- haven::read_dta("ZA3938_v1-0-1.dta") |>
+  filter(v12 %in% c(3, 4, 7, 9, 11, 15, 16)) |>
+  mutate(
+    country = case_when(
+      v12 == 3 ~ "NLD",
+      v12 == 4 ~ "DEU",
+      v12 == 7 ~ "DNK",
+      v12 == 9 ~ "GBR",
+      v12 == 11 ~ "ESP",
+      v12 == 15 ~ "SWE",
+      v12 == 16 ~ "AUS"
+    ) |> as.character(),
+    month = 11,
+    year = 2003,
+    year_month = paste(year, month, sep = "-")
+    # intdate_end_chr = as.character(intdate_end),
+    # year_month0 = str_extract(intdate_end_chr, "^.{6}"),
+    # year = str_extract(intdate_end_chr, "^.{4}"),
+    # month = str_extract(year_month0, ".{2}$"),
+    # year_month = paste(year, month, sep = "-")
+  ) 
+
+eb_final_601 <- eb601 |>
+  dplyr::select(
+    country, year_month, year, month, v59, v60, v143, v144, v153, v448
+  ) |>
+    mutate(
+    membrshp = case_when(
+      v59 < 4 ~ v59,
+      .default = NA
+    ),
+    mem = case_when(
+      membrshp == 1 ~ "Good",
+      membrshp == 2 ~ "Neither",
+      membrshp == 3 ~ "Bad",
+      .default = NA_character_
+    ) |>
+      factor(levels = c("Good", "Neither", "Bad")),
+    std_mem = (-as.numeric(membrshp) + 3)/2,
+    
+    
+    benefit = case_when(
+      v60 < 3 ~ v60,
+      .default = NA
+    ),
+    std_ben = (-as.numeric(benefit) + 2),
+    benefit = case_when(
+      benefit == 1 ~ "Benefited",
+      benefit == 2 ~ "Not benefited",
+      TRUE ~ NA_character_
+    ) |>
+      factor(levels = c("Benefited", "Not benefited")),
+    
+    trustec = case_when(
+      v144 < 4 ~ v144,
+      .default = NA
+    ),
+    std_trust_ec = (-as.numeric(trustec) + 2),
+    trust_ec = case_when(
+      trustec == 1 ~ "Trust",
+      trustec == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    
+    trustep = case_when(
+      v143 < 4 ~ v143,
+      .default = NA
+    ),
+    std_trust_ep = (-as.numeric(trustep) + 2),
+    trust_ep = case_when(
+      trustep == 1 ~ "Trust",
+      trustep == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    
+    satisdeu = case_when(
+      v153 < 5 ~ v153,
+      .default = NA
+    ),
+    std_sat_deu = (-as.numeric(satisdeu) + 4)/3,
+    sat_deu = case_when(
+      satisdeu == 1 ~ "Very satisfied",
+      satisdeu == 2 ~ "Fairly satisfied",
+      satisdeu == 3 ~ "Not very satisfied",
+      satisdeu == 4 ~ "Not at all satisfied",
+      TRUE ~ NA_character_
+    ) |>
+      factor(),
+    
+    
+    feel = case_when(
+      v448 < 5 ~ v448,
+      .default = NA
+    ),
+    std_feel = as.numeric(feel)/4,
+    feel = case_when(
+      feel == 4 ~ "European",
+      feel == 3 ~ "European then National",
+      feel == 2 ~ "National then European",
+      feel == 1 ~ "National",
+      TRUE ~ NA_character_
+    )
+    )
+
+eb_means_tri_601 <- eb_final_601 |>
+  mutate(
+    year_month_chr = as.character(year_month),
+    month = as.numeric(month),
+    trimester = ((month - 1) %/% 3) + 1,
+    # a convenient label
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    # make a Date for the first day of the trimester
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
+  ) |>
+  group_by(country, tri_date, tri) |>
+  summarise(
+    std_mem = mean(std_mem, na.rm = TRUE),
+    std_ben = mean(std_ben, na.rm = TRUE),
+    std_trust_ec = mean(std_trust_ec, na.rm = TRUE),
+    std_trust_ep = mean(std_trust_ep, na.rm = TRUE),
+    std_sat_deu = mean(std_sat_deu, na.rm = TRUE),
+    std_feel = mean(std_feel, na.rm = TRUE)
+  ) |>
+  ungroup() |>
+  mutate(std_mem = case_when(is.nan(std_mem) ~ NA_real_,
+                             .default = std_mem),
+         std_ben = case_when(is.nan(std_ben) ~ NA_real_,
+                             .default = std_ben),
+         std_trust_ec = case_when(is.nan(std_trust_ec) ~ NA_real_,
+                                  .default = std_trust_ec),
+         std_trust_ep = case_when(is.nan(std_trust_ep) ~ NA_real_,
+                                  .default = std_trust_ep),
+         std_sat_deu = case_when(is.nan(std_sat_deu) ~ NA_real_,
+                                 .default = std_sat_deu),
+         std_feel = case_when(is.nan(std_feel) ~ NA_real_,
+                              .default = std_feel)
+  )
+
+
+eb2 <- haven::read_dta("harmonised_EB_2004-2021_v3-0-0.dta")
+
+
+eb04_2021 <- eb2 |>
+  filter(country %in% c(3, 4, 7, 9, 12, 14, 17, 18)) |>
+  mutate(
+    country = case_when(
+      country == 3 ~ "NLD",
+      country == 4 ~ "DEU",
+      country == 14 ~ "DEU",
+      country == 7 ~ "DNK",
+      country == 9 ~ "GBR",
+      country == 12 ~ "ESP",
+      country == 17 ~ "SWE",
+      country == 18 ~ "AUS"
+    ) |> as.character(),
+    intdate_end_chr = as.character(intdate_end),
+    year_month0 = str_extract(intdate_end_chr, "^.{6}"),
+    year = str_extract(intdate_end_chr, "^.{4}"),
+    month = str_extract(year_month0, ".{2}$"),
+    year_month = paste(year, month, sep = "-")
+  ) 
+
+eb_final_2 <- eb04_2021 |>
+  dplyr::select(
+    country, year_month, year, month, mem, benefit, treu_com, treu_ep, satisdeu, feu_scale
+  ) |>
+    mutate(
+    mem = case_when(
+      mem == 1 ~ "Good",
+      mem == 2 ~ "Neither",
+      mem == 3 ~ "Bad",
+      TRUE ~ NA_character_
+    ) |>
+      factor(levels = c("Good", "Neither", "Bad")),
+    std_mem = (-as.numeric(mem) + 3)/2,
+    
+    benefit = case_when(
+      benefit == 1 ~ "Benefited",
+      benefit == 2 ~ "Not benefited",
+      TRUE ~ NA_character_
+    ) |>
+      factor(levels = c("Benefited", "Not benefited")),
+    std_ben = (-as.numeric(benefit) + 2),
+    
+    trust_ec = case_when(
+      treu_com == 1 ~ "Trust",
+      treu_com == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    std_trust_ec = (-as.numeric(treu_com) + 2),
+    
+    trust_ep = case_when(
+      treu_ep == 1 ~ "Trust",
+      treu_ep == 2 ~ "No Trust",
+      TRUE ~ NA_character_
+    ) |>
+      as.factor(),
+    std_trust_ep = (-as.numeric(treu_ep) + 2),
+    
+    sat_deu = case_when(
+      satisdeu == 1 ~ "Very satisfied",
+      satisdeu == 2 ~ "Fairly satisfied",
+      satisdeu == 3 ~ "Not very satisfied",
+      satisdeu == 4 ~ "Not at all satisfied",
+      TRUE ~ NA_character_
+    ) |>
+      factor(),
+    std_sat_deu = (-as.numeric(satisdeu) + 4)/3,
+    
+    feel = case_when(
+      feu_scale == 4 ~ "European",
+      feu_scale == 3 ~ "European then National",
+      feu_scale == 2 ~ "National then European",
+      feu_scale == 1 ~ "National",
+      TRUE ~ NA_character_
+    ),
+    std_feel = as.numeric(feu_scale)/4
+    )
+
+eb_means_tri_2 <- eb_final_2 |>
+  mutate(
+    year_month_chr = as.character(year_month),
+    month = as.numeric(month),
+    trimester = ((month - 1) %/% 3) + 1,
+    # a convenient label
+    tri = paste0(year, "-T", trimester),
+    tri_month = (trimester - 1) * 3 + 1,
+    # make a Date for the first day of the trimester
+    tri_date = as.Date(paste(year, tri_month, "01", sep = "-"))
+  ) |>
+  group_by(country, tri_date, tri) |>
+  summarise(
+    std_mem = mean(std_mem, na.rm = TRUE),
+    std_ben = mean(std_ben, na.rm = TRUE),
+    std_trust_ec = mean(std_trust_ec, na.rm = TRUE),
+    std_trust_ep = mean(std_trust_ep, na.rm = TRUE),
+    std_sat_deu = mean(std_sat_deu, na.rm = TRUE),
+    std_feel = mean(std_feel, na.rm = TRUE)
+  ) |>
+  ungroup() |>
+  mutate(std_mem = case_when(is.nan(std_mem) ~ NA_real_,
+                             .default = std_mem),
+         std_ben = case_when(is.nan(std_ben) ~ NA_real_,
+                             .default = std_ben),
+         std_trust_ec = case_when(is.nan(std_trust_ec) ~ NA_real_,
+                                  .default = std_trust_ec),
+         std_trust_ep = case_when(is.nan(std_trust_ep) ~ NA_real_,
+                                  .default = std_trust_ep),
+         std_sat_deu = case_when(is.nan(std_sat_deu) ~ NA_real_,
+                                 .default = std_sat_deu),
+         std_feel = case_when(is.nan(std_feel) ~ NA_real_,
+                              .default = std_feel)
+  )
+
+eb_cronbach <- eb_final_1 |>
+  dplyr::select(std_mem, std_ben, std_trust_ep, 
+                std_trust_ec, std_sat_deu, std_feel) |>
+  bind_rows(eb_final_2 |> dplyr::select(std_mem, std_ben, std_trust_ep, 
+                                        std_trust_ec, std_sat_deu, std_feel),
+            eb_final_581 |> dplyr::select(std_mem, std_ben, std_trust_ep, 
+                                          std_trust_ec, std_sat_deu, std_feel),
+            eb_final_591 |> dplyr::select(std_mem, std_ben, std_trust_ep, 
+                                          std_trust_ec, std_sat_deu, std_feel),
+            eb_final_601 |> dplyr::select(std_mem, std_ben, std_trust_ep, 
+                                          std_trust_ec, std_sat_deu, std_feel))
+
+psych::alpha(eb_cronbach)
+
+
+eb_means_tri <- bind_rows(eb_means_tri_1,
+                          eb_means_tri_581,
+                          eb_means_tri_591,
+                          eb_means_tri_601,
+                          eb_means_tri_2)
+
+
 eu_public_opinion_0 <- rowMeans(eb_means_tri |> 
                                   dplyr::select(std_mem, std_ben, 
                                                 std_trust_ep, std_trust_ec, 
-                                                std_sat_deu, std_feel), na.rm = TRUE)
+                                                std_sat_deu, std_feel), 
+                                na.rm = TRUE)
 
 eu_public_opinion_0[is.nan(eu_public_opinion_0)] <- NA_real_ # Replace NaN with NA
 
 eb_tri <- eb_means_tri |>
   mutate(eu_public_opinion_0 = eu_public_opinion_0) |>
-  dplyr::select(nation2, tri, tri_date, std_mem, std_trust_ec, std_sat_deu, eu_public_opinion_0) |>
-  rename(country = nation2) |>
+  dplyr::select(country, tri, tri_date, #std_mem, std_trust_ec, std_sat_deu, 
+                eu_public_opinion_0
+                ) |>
   full_join(data_trimester |> 
               dplyr::select(country, tri, tri_date) |> 
               distinct()) |>
@@ -688,26 +1373,28 @@ eb_tri <- eb_means_tri |>
     eu_public_opinion = zoo::na.locf0(eu_public_opinion_0, fromLast = FALSE),
     lag_eu_public_opinion = dplyr::lag(eu_public_opinion, order_by = tri_date),
     lag_eu_public_opinion_2 = dplyr::lag(eu_public_opinion, n = 2, order_by = tri_date),
-    lag_eu_public_opinion_3 = dplyr::lag(eu_public_opinion, n = 3, order_by = tri_date),
-    std_mem = zoo::na.locf0(std_mem, fromLast = FALSE),
-    std_trust_ec = zoo::na.locf0(std_trust_ec, fromLast = FALSE),
-    std_sat_deu = zoo::na.locf0(std_sat_deu, fromLast = FALSE)
+    lag_eu_public_opinion_3 = dplyr::lag(eu_public_opinion, n = 3, order_by = tri_date)#,
+    # std_mem = zoo::na.locf0(std_mem, fromLast = FALSE),
+    # std_trust_ec = zoo::na.locf0(std_trust_ec, fromLast = FALSE),
+    # std_sat_deu = zoo::na.locf0(std_sat_deu, fromLast = FALSE)
   )
 
 eb_tri |>
-  #mutate(date = as.Date(paste(year_month, "-01", sep = ""))) |>
-  #filter(!is.na(eu_public_opinion)) |>
+  filter(tri_date <= max(data_trimester$tri_date)) |>
+  mutate(is_orig = if_else(!is.na(eu_public_opinion_0), "Original", "Imputed") |>
+           as.factor() |>
+           relevel("Original")) |>
   arrange(country, tri_date) |>
-  ggplot(aes(x = tri_date, y = eu_public_opinion, group = country)) +
-  geom_point() +
+  ggplot(aes(x = tri_date, y = eu_public_opinion, group = country, colour = is_orig)) +
   geom_path() +
-  geom_point(aes(x = tri_date, y = eu_public_opinion), color = "red", alpha = 0.5) +
-  #geom_point(aes(x = tri_date, y = lag_eu_public_opinion), color = "blue", alpha = 0.5) +
+  geom_point() +
+  scale_color_brewer(palette = "Set1", name = "") +
   facet_wrap(~ country) +
   labs(x = "Year",
        y = "Public opinion on the EU",
-       title = "Public opinion on the EU by country",
-       subtitle = "Eurobarometer data")
+       title = "Public opinion on the EU by country (Eurobarometer)")
+
+#ggsave("eb_tri.png", width = 9.5, height = 6)
 
 ```
 
@@ -902,7 +1589,7 @@ polls_esp <- read_excel("spain_monthly.xlsx", col_types = c(rep("guess", 38), "n
 
 polls_uk <- read_excel("uk_polling_data.xlsx") |> unique() |>
   pivot_wider(names_from = Party, values_from = Polling) |>
-  mutate(date = as.Date(Date),
+  mutate(date = as.Date(Date, format = "%d-%m-%Y"),
          year = year(date),
          month = month(date),
          trimester = ((month - 1) %/% 3) + 1,
@@ -969,26 +1656,16 @@ polls_tri <- bind_rows(polls_aus, polls_swe, polls_dnk, polls_deu, polls_nld, po
 ```{r}
 
 reg_data_tri <- data_trimester |>
-  filter(parlgov_id %in% c(1013, 973, ## OVP and SPO
-                           558, 1727, ## SPD and CDU
-                           1629, 1605, ## Danish SDs and Venstre
-                           902, 645, ## PSOE and PP
-                           1556, 773, ## Labour and Conservatives
-                           1409, 742, 235, ## VVD, PvdA, and CDA
-                           657, 904 ## SAP and Moderates
-                           )) |>
   dplyr::select(country, parlgov_id, name_short, name, name_english, 
                 tri, tri_date,
-                n_sentences, n_eu, share_eu, share_support, share_opposition, net_position,
-                sd_position_0, sd_position_1, sd_position_5,
+                count, count_mention, prop_eu_mention, 
+                count_support, prop_support, 
+                count_oppose, prop_oppose, net_position,
                 time_from_last, time_to_next, time_to_next_ep, vote_share, 
-                rrp_voteshare, rrp_lag, rrp_lag2, rrp_seats, rrp_seat_lag, rrp_seatshare, rrp_seatshare_lag,
+                rrp_voteshare, rrp_lag, rrp_lag2, rrp_seats, rrp_seat_lag, 
+                rrp_seatshare, rrp_seatshare_lag,
                 change_voteshare, cabinet_party) |>
-  rename(count = n_sentences,
-         eu_count = n_eu,
-         prop_eu_mention = share_eu,
-         prop_support = share_support,
-         prop_oppose = share_opposition) |>
+  rename(eu_count = count_mention) |>
   mutate(
     date_numeric = as.numeric(tri_date),
     rrp_in_parliament = case_when(
@@ -998,7 +1675,10 @@ reg_data_tri <- data_trimester |>
     ),
     log_net_position = log(net_position + 0.1),
     log_prop_support = log(prop_support + 0.01),
-    log_prop_eu_mention = log(prop_eu_mention + 0.01)
+    log_count_support = log(count_support + 0.5),
+    log_count_oppose = log(count_oppose + 0.5),
+    log_prop_eu_mention = log(prop_eu_mention + 0.01),
+    lowe = log_count_support - log_count_oppose
   ) |>
   distinct() |>
   group_by(country, name_short) |>
@@ -1016,7 +1696,9 @@ reg_data_tri <- data_trimester |>
     change_support = prop_support - lag_prop_support,
     
     lag_prop_oppose = dplyr::lag(prop_oppose, order_by = tri_date),
-    change_oppose = prop_oppose - lag_prop_oppose
+    change_oppose = prop_oppose - lag_prop_oppose,
+    
+    lag_lowe = dplyr::lag(lowe, order_by = tri_date),
   ) |>
   ungroup() |>
   left_join(read_csv("view_party.csv") |>
@@ -1053,7 +1735,6 @@ reg_data_tri <- data_trimester |>
 #write.csv(reg_data_tri, "reg_data_tri.csv", row.names = FALSE)
 
 ```
-
 
 
 The variables are in the `reg_data_tri` dataframe.
