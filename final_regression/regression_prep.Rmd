@@ -23,129 +23,216 @@ theme_set(theme_bw() +
 
 ## Cleaning LLM-Classified Speeches
 
-###  Non-EU Speeches
-
 ```{r}
 
-# aus <- read_csv("AUS_Full_Classified.csv") |>
-#   filter(EU == 0) |>
+# aus <- read_csv("AUS_classified.csv") |>
 #   mutate(
-#     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
+#     month = as.factor(format(date, "%m")),
+#     eu_mention = case_when(
+#       eu_pred == "Non-EU" ~ 0,
+#       eu_pred == "EU" ~ 1,
+#       .default = NA_real_
+#     ),
+#     eu_stance = stance_pred,
+#     eu_support = case_when(
+#       eu_stance == "Support" ~ 1,
+#       eu_stance %in% c("Opposition", "Neutral") ~ 0,
+#       .default = NA_real_
+#     ),
+#     eu_opposition = case_when(
+#       eu_stance == "Opposition" ~ 1,
+#       eu_stance %in% c("Support", "Neutral") ~ 0,
+#       .default = NA_real_
+#     )
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU,
-#          eu_opposition = Opposition,
-#          eu_support = Support,
-#          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c(`...1`))
-# 
-# dnk <- read_csv("DNK_Full_Classified.csv") |>
-#   filter(EU == 0) |>
+#   dplyr::select(sentence_uid, speech_id,
+#                 country, partyfacts_id, date, 
+#                 year, year_month, month, 
+#                 eu_mention, eu_stance, eu_opposition, eu_support)
+#
+# dnk <- read_csv("DNK_classified.csv") |>
 #   mutate(
-#     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
+#     month = as.factor(format(date, "%m")),
+#     eu_mention = case_when(
+#       eu_pred == "Non-EU" ~ 0,
+#       eu_pred == "EU" ~ 1,
+#       .default = NA_real_
+#     ),
+#     eu_stance = stance_pred,
+#     eu_support = case_when(
+#       eu_stance == "Support" ~ 1,
+#       eu_stance %in% c("Opposition", "Neutral") ~ 0,
+#       .default = NA_real_
+#     ),
+#     eu_opposition = case_when(
+#       eu_stance == "Opposition" ~ 1,
+#       eu_stance %in% c("Support", "Neutral") ~ 0,
+#       .default = NA_real_
+#     )
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU,
-#          eu_opposition = Opposition,
-#          eu_support = Support,
-#          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c(`...1`))
-# 
-# swe <- read_csv("SWE_Full_Classified.csv") |>
-#   filter(EU == 0) |>
+#   dplyr::select(sentence_uid, speech_id,
+#                 country, partyfacts_id, date, 
+#                 year, year_month, month, 
+#                 eu_mention, eu_stance, eu_opposition, eu_support)
+#
+# swe <- read_csv("SWE_classified.csv") |>
 #   mutate(
-#     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
+#     month = as.factor(format(date, "%m")),
+#     eu_mention = case_when(
+#       eu_pred == "Non-EU" ~ 0,
+#       eu_pred == "EU" ~ 1,
+#       .default = NA_real_
+#     ),
+#     eu_stance = stance_pred,
+#     eu_support = case_when(
+#       eu_stance == "Support" ~ 1,
+#       eu_stance %in% c("Opposition", "Neutral") ~ 0,
+#       .default = NA_real_
+#     ),
+#     eu_opposition = case_when(
+#       eu_stance == "Opposition" ~ 1,
+#       eu_stance %in% c("Support", "Neutral") ~ 0,
+#       .default = NA_real_
+#     )
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU,
-#          eu_opposition = Opposition,
-#          eu_support = Support,
-#          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c(`...1`))
+#   dplyr::select(sentence_uid, speech_id,
+#                 country, partyfacts_id, date, 
+#                 year, year_month, month, 
+#                 eu_mention, eu_stance, eu_opposition, eu_support)
 # 
-# deu <- read_csv("DEU_Full_Classified.csv") |>
-#   filter(EU == 0) |>
+# deu <- read_csv("DEU_classified.csv") |>
 #   mutate(
-#     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
+#     month = as.factor(format(date, "%m")),
+#     eu_mention = case_when(
+#       eu_pred == "Non-EU" ~ 0,
+#       eu_pred == "EU" ~ 1,
+#       .default = NA_real_
+#     ),
+#     eu_stance = stance_pred,
+#     eu_support = case_when(
+#       eu_stance == "Support" ~ 1,
+#       eu_stance %in% c("Opposition", "Neutral") ~ 0,
+#       .default = NA_real_
+#     ),
+#     eu_opposition = case_when(
+#       eu_stance == "Opposition" ~ 1,
+#       eu_stance %in% c("Support", "Neutral") ~ 0,
+#       .default = NA_real_
+#     )
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU,
-#          eu_opposition = Opposition,
-#          eu_support = Support,
-#          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c(`...1`))
+#   dplyr::select(sentence_uid, speech_id,
+#                 country, partyfacts_id, date, 
+#                 year, year_month, month, 
+#                 eu_mention, eu_stance, eu_opposition, eu_support)
 # 
-# esp <- read_csv("ESP_Full_Classified.csv") |>
-#   filter(EU == 0) |>
+# esp <- read_csv("ESP_classified.csv") |>
 #   mutate(
-#     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
+#     month = as.factor(format(date, "%m")),
+#     eu_mention = case_when(
+#       eu_pred == "Non-EU" ~ 0,
+#       eu_pred == "EU" ~ 1,
+#       .default = NA_real_
+#     ),
+#     eu_stance = stance_pred,
+#     eu_support = case_when(
+#       eu_stance == "Support" ~ 1,
+#       eu_stance %in% c("Opposition", "Neutral") ~ 0,
+#       .default = NA_real_
+#     ),
+#     eu_opposition = case_when(
+#       eu_stance == "Opposition" ~ 1,
+#       eu_stance %in% c("Support", "Neutral") ~ 0,
+#       .default = NA_real_
+#     )
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU,
-#          eu_opposition = Opposition,
-#          eu_support = Support,
-#          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c(`...1`))
+#   dplyr::select(sentence_uid, speech_id,
+#                 country, partyfacts_id, date, 
+#                 year, year_month, month, 
+#                 eu_mention, eu_stance, eu_opposition, eu_support)
 # 
-# nld <- read_csv("NLD_Full_Classified.csv") |>
-#   filter(EU == 0) |>
+# nld <- read_csv("NLD_classified.csv") |>
 #   mutate(
-#     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
+#     month = as.factor(format(date, "%m")),
+#     eu_mention = case_when(
+#       eu_pred == "Non-EU" ~ 0,
+#       eu_pred == "EU" ~ 1,
+#       .default = NA_real_
+#     ),
+#     eu_stance = stance_pred,
+#     eu_support = case_when(
+#       eu_stance == "Support" ~ 1,
+#       eu_stance %in% c("Opposition", "Neutral") ~ 0,
+#       .default = NA_real_
+#     ),
+#     eu_opposition = case_when(
+#       eu_stance == "Opposition" ~ 1,
+#       eu_stance %in% c("Support", "Neutral") ~ 0,
+#       .default = NA_real_
+#     )
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU,
-#          eu_opposition = Opposition,
-#          eu_support = Support,
-#          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c(`...1`))
+#   dplyr::select(sentence_uid, speech_id,
+#                 country, partyfacts_id, date, 
+#                 year, year_month, month, 
+#                 eu_mention, eu_stance, eu_opposition, eu_support)
 # 
-# gbr <- read_csv("GBR_Full_Classified.csv") |>
-#   filter(EU == 0) |>
+# gbr <- read_csv("GBR_classified.csv") |>
 #   mutate(
-#     year = as.numeric(format(date, "%Y")),
 #     year_month = as.factor(format(date, "%Y-%m")),
-#     month = as.factor(format(date, "%m"))
+#     month = as.factor(format(date, "%m")),
+#     eu_mention = case_when(
+#       eu_pred == "Non-EU" ~ 0,
+#       eu_pred == "EU" ~ 1,
+#       .default = NA_real_
+#     ),
+#     eu_stance = stance_pred,
+#     eu_support = case_when(
+#       eu_stance == "Support" ~ 1,
+#       eu_stance %in% c("Opposition", "Neutral") ~ 0,
+#       .default = NA_real_
+#     ),
+#     eu_opposition = case_when(
+#       eu_stance == "Opposition" ~ 1,
+#       eu_stance %in% c("Support", "Neutral") ~ 0,
+#       .default = NA_real_
+#     )
 #   ) |>
 #   rename(country = iso3country,
-#          eu_mention = EU,
-#          eu_opposition = Opposition,
-#          eu_support = Support,
-#          eu_stance = Stance,
 #          partyfacts_id = party.facts.id) |>
-#   dplyr::select(-c(`...1`))
+#   dplyr::select(sentence_uid, speech_id,
+#                 country, partyfacts_id, date, 
+#                 year, year_month, month, 
+#                 eu_mention, eu_stance, eu_opposition, eu_support)
 # 
-# data_no_EU <- aus |>
+# data0 <- aus |>
 #   bind_rows(dnk) |>
 #   bind_rows(swe) |>
 #   bind_rows(deu) |>
 #   bind_rows(esp) |>
 #   bind_rows(nld) |>
-#   bind_rows(gbr) |>
-#   dplyr::select(-c(EU_prob, eu_opposition, Opposition_prob, 
-#                    eu_support, Support_prob, eu_stance, year))
-
+#   bind_rows(gbr)
+#
 #sum(is.na(data0$eu_mention)) ## Confirming all speeches have been assigned EU stance))
-
-
-#sum(is.na(data0$eu_stance[data0$eu_mention == 1])) ## Confirming all EU-mentioning speeches have been assigned EU stance
+#
+#sum(is.na(data0$eu_stance[data0$eu_mention == 1])) ## Confirming all EU-mentioning 
+                                                    ## speeches have been assigned EU                                                      ## stance
 
 #write.csv(data0, "data0.csv", row.names = FALSE)
 
@@ -192,79 +279,6 @@ data0 <- read_csv("data0.csv")
 
 ```
 
-
-```{r}
-
-data_cross_verification <- read_csv("Ches_Year_classified_compact_V1.csv") |>
-    dplyr::select(-`...1`) |>
-    mutate(
-        year = as.numeric(format(date, "%Y")),
-        year_month = as.factor(format(date, "%Y-%m")),
-        month = as.factor(format(date, "%m"))
-    ) |>
-    rename(country = iso3country,
-           eu_mention = EU,
-           partyfacts_id = party.facts.id) |>
-    mutate(eu_support_mmbert_3way = ifelse(mmbert_3way_pred == "Support", 1, 0),
-           eu_support_mmbert_cascade = ifelse(mmbert_cascade_updated_pred == "Support", 1, 0),
-           eu_support_xlm_3way = ifelse(xlm_base_3way_pred == "Support", 1, 0),
-           eu_support_xlm_cascade = ifelse(xlm_base_cascade_pred == "Support", 1, 0),
-           eu_support_large_3way = ifelse(xlm_large_3way_pred == "Support", 1, 0),
-           eu_support_large_cascade = ifelse(xlm_large_cascade_pred == "Support", 1, 0),
-           
-           eu_opposition_mmbert_3way = ifelse(mmbert_3way_pred == "Opposition", 1, 0),
-           eu_opposition_mmbert_cascade = ifelse(mmbert_cascade_updated_pred == "Opposition", 1, 0),
-           eu_opposition_xlm_3way = ifelse(xlm_base_3way_pred == "Opposition", 1, 0),
-           eu_opposition_xlm_cascade = ifelse(xlm_base_cascade_pred == "Opposition", 1, 0),
-           eu_opposition_large_3way = ifelse(xlm_large_3way_pred == "Opposition", 1, 0),
-           eu_opposition_large_cascade = ifelse(xlm_large_cascade_pred == "Opposition", 1, 0)
-           ) |>
-  group_by(country, partyfacts_id, year) |>
-  summarise(
-    count = n(),
-    count_mention = sum(eu_mention == 1, na.rm = TRUE),
-    
-    count_support_mmbert_3way = sum(eu_support_mmbert_3way, na.rm = TRUE),
-    count_support_mmbert_cascade = sum(eu_support_mmbert_cascade, na.rm = TRUE),
-    count_support_xlm_3way = sum(eu_support_xlm_3way, na.rm = TRUE),
-    count_support_xlm_cascade = sum(eu_support_xlm_cascade, na.rm = TRUE),
-    count_support_large_3way = sum(eu_support_large_3way, na.rm = TRUE),
-    count_support_large_cascade = sum(eu_support_large_cascade, na.rm = TRUE),
-    
-    count_oppose_mmbert_3way = sum(eu_opposition_mmbert_3way, na.rm = TRUE),
-    count_oppose_mmbert_cascade = sum(eu_opposition_mmbert_cascade, na.rm = TRUE),
-    count_oppose_xlm_3way = sum(eu_opposition_xlm_3way, na.rm = TRUE),
-    count_oppose_xlm_cascade = sum(eu_opposition_xlm_cascade, na.rm = TRUE),
-    count_oppose_large_3way = sum(eu_opposition_large_3way, na.rm = TRUE),
-    count_oppose_large_cascade = sum(eu_opposition_large_cascade, na.rm = TRUE),
-    
-    prop_support_mmbert_3way = count_support_mmbert_3way/count_mention,
-    prop_support_mmbert_cascade = count_support_mmbert_cascade/count_mention,
-    prop_support_xlm_3way = count_support_xlm_3way/count_mention,
-    prop_support_xlm_cascade = count_support_xlm_cascade/count_mention,
-    prop_support_large_3way = count_support_large_3way/count_mention,
-    prop_support_large_cascade = count_support_large_cascade/count_mention,
-    
-    prop_oppose_mmbert_3way = count_oppose_mmbert_3way/count_mention,
-    prop_oppose_mmbert_cascade = count_oppose_mmbert_cascade/count_mention,
-    prop_oppose_xlm_3way = count_oppose_xlm_3way/count_mention,
-    prop_oppose_xlm_cascade = count_oppose_xlm_cascade/count_mention,
-    prop_oppose_large_3way = count_oppose_large_3way/count_mention,
-    prop_oppose_large_cascade = count_oppose_large_cascade/count_mention,
-    
-    net_position_mmbert_3way = prop_support_mmbert_3way - prop_oppose_mmbert_3way,
-    net_position_mmbert_cascade = prop_support_mmbert_cascade - prop_oppose_mmbert_cascade,
-    net_position_xlm_3way = prop_support_xlm_3way - prop_oppose_xlm_3way,
-    net_position_xlm_cascade = prop_support_xlm_cascade - prop_oppose_xlm_cascade,
-    net_position_large_3way = prop_support_large_3way - prop_oppose_large_3way,
-    net_position_large_cascade = prop_support_large_cascade - prop_oppose_large_cascade
-  ) |>
-  ungroup()
-
-#write.csv(data_cross_verification, "data_ches_cross_verification.csv", row.names = FALSE)
-
-```
-
 ```{r}
 
 data_yearly <- data0 |>
@@ -287,6 +301,7 @@ data_yearly <- data0 |>
 
 
 ```{r}
+
 df_trimester <- data0 |>
   mutate(
     year_month_chr = as.character(year_month),
@@ -311,14 +326,6 @@ df_trimester <- data0 |>
     prop_support = count_support/count_mention,
     prop_oppose = count_oppose/count_mention,
     net_position = prop_support - prop_oppose
-    # n_sentences = n(),                            # total sentences in the trimester-cell
-    # n_eu = sum(eu_mention == 1, na.rm = TRUE),    # number of EU-mentioning sentences
-    # share_eu = ifelse(n_sentences > 0, n_eu / n_sentences, NA_real_),
-    # # shares among EU mentions -> use mean on Support/Opposition which are NA for non-eu rows
-    # share_support = ifelse(n_eu > 0, mean(eu_support, na.rm = TRUE), NA_real_),
-    # share_opposition = ifelse(n_eu > 0, mean(eu_opposition, na.rm = TRUE), NA_real_),
-    # net_position = ifelse(n_eu > 0, share_support - share_opposition, NA_real_),
-    # .groups = "drop"
   ) |>
   ungroup()
 

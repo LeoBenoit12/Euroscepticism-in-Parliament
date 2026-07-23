@@ -1,7 +1,7 @@
 Regressions
 ================
 Duarte Amaro
-2026-07-20
+2026-07-23
 
 ``` r
 data0 <- read_csv("data0.csv") |>
@@ -101,20 +101,6 @@ data_yearly <- read_csv("data_yearly.csv")
     ## Delimiter: ","
     ## chr  (1): country
     ## dbl (10): partyfacts_id, year, count, count_mention, count_support, count_op...
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-
-``` r
-data_cross_verification <- read_csv("data_ches_cross_verification.csv") |>
-  mutate(partyfacts_id = as.numeric(partyfacts_id))
-```
-
-    ## Rows: 289 Columns: 35
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## Delimiter: ","
-    ## chr  (1): country
-    ## dbl (34): partyfacts_id, year, count, count_mention, count_support_mmbert_3w...
     ## 
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
@@ -387,7 +373,7 @@ data_trimester |>
 ## Getting ches and partyfacts codes:
 
 partyfacts_to_ches <- read_csv("partyfacts-external-parties.csv") |> 
-  filter((partyfacts_id %in% unique(data_cross_verification$partyfacts_id) | 
+  filter((partyfacts_id %in% unique(data_yearly$partyfacts_id) | 
             partyfacts_id == 540 | # For some reason, PartyFacts codes LibDems differently for ParlGov
             partyfacts_id == 1375) & # CHES distinguishes between CDU and CSU
            dataset_key == "ches" &
@@ -423,13 +409,9 @@ ches <- haven::read_dta("1999-2019_CHES_dataset_means(v3).dta") |>
          ches_country = country) |>
   dplyr::select(ches_country, ches_id, year, party, eu_position, eu_salience, eu_dissent, eu_blur, family)
 
-joint_ches <- data_cross_verification |>
+joint_ches <- data_yearly |>
   left_join(partyfacts_to_ches, by = "partyfacts_id") |> 
-  left_join(ches, by = c("ches_id", "year")) |>
-  pivot_longer(cols = starts_with("net_position"), 
-               values_to = "net_position", 
-               names_to = "model") |>
-  mutate(model = str_remove(model, "net_position_"))
+  left_join(ches, by = c("ches_id", "year"))
 ```
 
 ``` r
@@ -439,14 +421,12 @@ parties <- c(1329, 1384, 211, 383, 379, 1204,
 
 joint_ches |>
   filter(partyfacts_id %in% parties &
-           !is.na(eu_position) &
-           model == "large_3way") |>
+           !is.na(eu_position)) |>
   ggplot(aes(x = eu_position, y = net_position)) +
   geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", colour = "blue", fill = "blue", alpha = 0.2) +
   ggpubr::stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~~")),
                                 label.x = 1.7, label.y = 0.32) +
-  #facet_wrap(~ model, scales = "free") +
   labs(x = "CHES Position",
        y = "Net Position",
        title = "CHES Position against Net Position (Regression Parties Only)")
@@ -466,11 +446,7 @@ joint_ches |>
 #ggsave("ches_cross_verification.png", device = "png", width = 9.5, height = 6)
 
 joint_ches |>
-  filter(partyfacts_id %in% parties &
-           model == "large_3way" &
-           !is.na(eu_position)) |>
-  # rename(Model = model) |>
-  # group_by(Model) |>
+  filter(partyfacts_id %in% parties) |>
   summarise(Correlation = cor(eu_position, net_position, use = "complete.obs"))
 ```
 
@@ -481,19 +457,11 @@ joint_ches |>
 
 ``` r
 joint_ches |>
-  filter(#partyfacts_id %in% parties &
-           !is.na(eu_position) &
-           model == "large_3way") |>
   ggplot(aes(x = eu_position, y = net_position)) +
   geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", colour = "blue", fill = "blue", alpha = 0.2) +
-  #ggrepel::geom_text_repel(aes(label = ifelse(abs(net_position-(-31 + 6.4*eu_position))>16.68,
-            #                                   paste(party, year, sep = ", "),
-              #                                 NA)),
-             #               size = 3, max.overlaps = 15) +
   ggpubr::stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~~")),
                                 label.x = 1.1, label.y = 0.32) +
-  #facet_wrap(~ model, scales = "free") +
   labs(x = "CHES Position",
        y = "Net Position",
        title = "CHES Position against Net Position (All Parties)")
@@ -501,17 +469,21 @@ joint_ches |>
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
+    ## Warning: Removed 953 rows containing non-finite outside the scale range
+    ## (`stat_smooth()`).
+
+    ## Warning: Removed 953 rows containing non-finite outside the scale range
+    ## (`stat_regline_equation()`).
+
+    ## Warning: Removed 953 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
 ![](regression_final_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
 #ggsave("ches_cross_verification_all.png", device = "png", width = 9.5, height = 6)
 
 joint_ches |>
-  filter(#partyfacts_id %in% parties &
-           !is.na(eu_position) &
-           model == "large_3way") |>
-  # rename(Model = model) |>
-  # group_by(Model) |>
   summarise(Correlation = cor(eu_position, net_position, use = "complete.obs"))
 ```
 
